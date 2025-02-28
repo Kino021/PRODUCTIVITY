@@ -44,22 +44,21 @@ if uploaded_file is not None:
 
     # Function to calculate productivity summary
     def calculate_productivity_summary(df):
+        # Remove the "Total Balance" column from the table definition
         productivity_table = pd.DataFrame(columns=[
-            'Day', 'Total Connected', 'Total PTP', 'Total RPC', 'Total PTP Amount', 'Total Balance'
+            'Day', 'Total Connected', 'Total PTP', 'Total RPC', 'Total PTP Amount'
         ])
         
         total_connected_all = 0
         total_ptp_all = 0
         total_rpc_all = 0
         total_ptp_amount_all = 0
-        total_balance_all = 0
 
         for date, group in df.groupby(df['Date'].dt.date):
             total_connected = group[group['Call Status'] == 'CONNECTED']['Account No.'].count()
             total_ptp = group[group['Status'].str.contains('PTP', na=False) & (group['PTP Amount'] != 0)]['Account No.'].nunique()
             total_rpc = group[group['Status'].str.contains('RPC', na=False)]['Account No.'].nunique()
             total_ptp_amount = group[group['Status'].str.contains('PTP', na=False) & (group['PTP Amount'] != 0)]['PTP Amount'].sum()
-            total_balance = group[group['Balance'] != 0]['Balance'].sum()  # Calculate Total Balance
 
             # Adding the summary data to the dataframe
             productivity_table = pd.concat([productivity_table, pd.DataFrame([{
@@ -68,7 +67,6 @@ if uploaded_file is not None:
                 'Total PTP': total_ptp,
                 'Total RPC': total_rpc,
                 'Total PTP Amount': total_ptp_amount,
-                'Total Balance': total_balance,  # Adding Total Balance to the table
             }])], ignore_index=True)
 
             # Update overall totals
@@ -76,7 +74,6 @@ if uploaded_file is not None:
             total_ptp_all += total_ptp
             total_rpc_all += total_rpc
             total_ptp_amount_all += total_ptp_amount
-            total_balance_all += total_balance  # Update overall balance
 
         # Add a row with total values
         productivity_table = pd.concat([productivity_table, pd.DataFrame([{
@@ -85,7 +82,6 @@ if uploaded_file is not None:
             'Total PTP': total_ptp_all,
             'Total RPC': total_rpc_all,
             'Total PTP Amount': total_ptp_amount_all,
-            'Total Balance': total_balance_all,  # Add total balance
         }])], ignore_index=True)
 
         return productivity_table
