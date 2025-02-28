@@ -42,8 +42,8 @@ def load_data(uploaded_file):
 uploaded_file = st.sidebar.file_uploader("Upload Daily Remark File", type="xlsx")
 
 if uploaded_file is not None:
+    # Load the filtered data (we'll not display the raw data anymore)
     df = load_data(uploaded_file)
-    st.write(df)
 
     # Function to calculate productivity summary
     def calculate_productivity_summary(df):
