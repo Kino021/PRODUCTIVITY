@@ -146,62 +146,54 @@ if uploaded_file is not None:
     cycle_productivity_summary = calculate_productivity_per_cycle(df)
     st.write(cycle_productivity_summary)
 
-    col5, col6 = st.columns(2)
-
-    with col5:
-        st.write("## Productivity Summary by Collector per Day")
-        
-        # Add date filter
-        min_date = df['Date'].min().date()
-        max_date = df['Date'].max().date()
-        start_date, end_date = st.date_input("Select date range", [min_date, max_date], min_value=min_date, max_value=max_date)
-
-        filtered_df = df[(df['Date'].dt.date >= start_date) & (df['Date'].dt.date <= end_date)]
-
-        collector_productivity_summary = pd.DataFrame(columns=[
-            'Day', 'Collector', 'Total Connected', 'Total PTP', 'Total RPC', 'Total PTP Amount', 'Balance Amount'
+    # --- Calculate Hourly Productivity per Cycle (Service No.) ---
+    def calculate_hourly_productivity_per_cycle(df):
+        hourly_productivity_table = pd.DataFrame(columns=[
+            'Cycle (Service No.)', 'Hour', 'RPC Count', 'PTP Count', 'Total PTP Amount', 'Total Balance Amount'
         ])
         
-        total_connected_all_collector = 0
-        total_ptp_all_collector = 0
-        total_rpc_all_collector = 0
-        total_ptp_amount_all_collector = 0
-        total_balance_amount_all_collector = 0
+        total_rpc_all_hour = 0
+        total_ptp_all_hour = 0
+        total_ptp_amount_all_hour = 0
+        total_balance_amount_all_hour = 0
 
-        for (date, collector), collector_group in filtered_df[~filtered_df['Remark By'].str.upper().isin(['SYSTEM'])].groupby([filtered_df['Date'].dt.date, 'Remark By']):
-            total_connected = collector_group[collector_group['Call Status'] == 'CONNECTED']['Account No.'].count()
-            total_ptp = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['PTP Amount'] != 0)]['Account No.'].nunique()
-            total_rpc = collector_group[collector_group['Status'].str.contains('RPC', na=False)]['Account No.'].nunique()
-            total_ptp_amount = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['PTP Amount'] != 0)]['PTP Amount'].sum()
-            total_balance_amount = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['Balance'] != 0)]['Balance'].sum()
+        # Group by Service No. (cycle) and Hour (extracted from Date)
+        df['Hour'] = df['Date'].dt.hour  # Extract hour from Date for grouping
+        for (service_no, hour), cycle_hour_group in df.groupby(['Service No.', 'Hour']):
+            rpc_count = cycle_hour_group[cycle_hour_group['Status'].str.contains('RPC', na=False)]['Account No.'].nunique()
+            ptp_count = cycle_hour_group[cycle_hour_group['Status'].str.contains('PTP', na=False)]['Account No.'].nunique()
+            total_ptp_amount = cycle_hour_group[cycle_hour_group['Status'].str.contains('PTP', na=False)]['PTP Amount'].sum()
+            total_balance_amount = cycle_hour_group[cycle_hour_group['Status'].str.contains('PTP', na=False) & (cycle_hour_group['Balance'] != 0)]['Balance'].sum()
 
-            # Adding the collector's productivity data
-            collector_productivity_summary = pd.concat([collector_productivity_summary, pd.DataFrame([{
-                'Day': date,
-                'Collector': collector,
-                'Total Connected': total_connected,
-                'Total PTP': total_ptp,
-                'Total RPC': total_rpc,
+            # Adding the hourly productivity data
+            hourly_productivity_table = pd.concat([hourly_productivity_table, pd.DataFrame([{
+                'Cycle (Service No.)': service_no,
+                'Hour': hour,
+                'RPC Count': rpc_count,
+                'PTP Count': ptp_count,
                 'Total PTP Amount': total_ptp_amount,
-                'Balance Amount': total_balance_amount,  # Corrected this part
+                'Total Balance Amount': total_balance_amount,
             }])], ignore_index=True)
 
-            # Update overall totals for collectors
-            total_connected_all_collector += total_connected
-            total_ptp_all_collector += total_ptp
-            total_rpc_all_collector += total_rpc
-            total_ptp_amount_all_collector += total_ptp_amount
-            total_balance_amount_all_collector += total_balance_amount  # Fixed
+            # Update overall totals for hourly productivity
+            total_rpc_all_hour += rpc_count
+            total_ptp_all_hour += ptp_count
+            total_ptp_amount_all_hour += total_ptp_amount
+            total_balance_amount_all_hour += total_balance_amount
 
-        # Add a row with total values for the collector summary
-        collector_productivity_summary = pd.concat([collector_productivity_summary, pd.DataFrame([{
-            'Day': 'Total',
-            'Collector': 'All Collectors',
-            'Total Connected': total_connected_all_collector,
-            'Total PTP': total_ptp_all_collector,
-            'Total RPC': total_rpc_all_collector,
-            'Total PTP Amount': total_ptp_amount_all_collector,
-            'Balance Amount': total_balance_amount_all_collector,  # Corrected here
+        # Add a row with total values for hourly productivity
+        hourly_productivity_table = pd.concat([hourly_productivity_table, pd.DataFrame([{
+            'Cycle (Service No.)': 'Total',
+            'Hour': 'All Hours',
+            'RPC Count': total_rpc_all_hour,
+            'PTP Count': total_ptp_all_hour,
+            'Total PTP Amount': total_ptp_amount_all_hour,
+            'Total Balance Amount': total_balance_amount_all_hour,
         }])], ignore_index=True)
 
-        st.write(collector_productivity_summary)
+        return hourly_productivity_table
+
+    # Display the hourly productivity per cycle (Service No.) summary
+    st.write("## Hourly Productivity Summary per Cycle (Service No.)")
+    hourly_productivity_summary = calculate_hourly_productivity_per_cycle(df)
+    st.write(hourly_productivity_summary)
