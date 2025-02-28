@@ -84,6 +84,7 @@ if uploaded_file is not None:
             total_ptp = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['PTP Amount'] != 0)]['Account No.'].nunique()
             total_rpc = collector_group[collector_group['Status'].str.contains('RPC', na=False)]['Account No.'].nunique()
             total_ptp_amount = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['PTP Amount'] != 0)]['PTP Amount'].sum()
+            balance_amount = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['Balance'] != 0)]['Balance'].sum()
 
             # Adding the collector's productivity data
             collector_productivity_summary = pd.concat([collector_productivity_summary, pd.DataFrame([{
@@ -93,6 +94,7 @@ if uploaded_file is not None:
                 'Total PTP': total_ptp,
                 'Total RPC': total_rpc,
                 'Total PTP Amount': total_ptp_amount,
+                'Balance Amount': balance_amount,
             }])], ignore_index=True)
         
         st.write(collector_productivity_summary)
