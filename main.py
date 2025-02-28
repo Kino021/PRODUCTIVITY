@@ -54,6 +54,9 @@ if uploaded_file is not None:
         total_ptp_amount_all = 0
         total_balance_all = 0
 
+        # Collect balance data based on agents (collectors)
+        agent_balances = []
+
         for date, group in df.groupby(df['Date'].dt.date):
             total_connected = group[group['Call Status'] == 'CONNECTED']['Account No.'].count()
             total_ptp = group[group['Status'].str.contains('PTP', na=False) & (group['PTP Amount'] != 0)]['Account No.'].nunique()
@@ -78,6 +81,12 @@ if uploaded_file is not None:
             total_ptp_amount_all += total_ptp_amount
             total_balance_all += total_balance  # Update overall balance
 
+            # Collect balance data for agents (collectors)
+            agent_balances.extend(group['Balance'].dropna().tolist())
+
+        # Now calculate the correct "Total Balance" based on agents' balances
+        total_balance_agents = sum(agent_balances)
+
         # Add a row with total values
         productivity_table = pd.concat([productivity_table, pd.DataFrame([{
             'Day': 'Total',
@@ -85,7 +94,7 @@ if uploaded_file is not None:
             'Total PTP': total_ptp_all,
             'Total RPC': total_rpc_all,
             'Total PTP Amount': total_ptp_amount_all,
-            'Total Balance': total_balance_all,  # Add total balance
+            'Total Balance': total_balance_agents,  # Corrected Total Balance
         }])], ignore_index=True)
 
         return productivity_table
