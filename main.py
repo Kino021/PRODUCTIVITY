@@ -108,7 +108,7 @@ if uploaded_file is not None:
             total_ptp = cycle_group[cycle_group['Status'].str.contains('PTP', na=False) & (cycle_group['PTP Amount'] != 0)]['Account No.'].nunique()
             total_rpc = cycle_group[cycle_group['Status'].str.contains('RPC', na=False)]['Account No.'].nunique()
             total_ptp_amount = cycle_group[cycle_group['Status'].str.contains('PTP', na=False) & (cycle_group['PTP Amount'] != 0)]['PTP Amount'].sum()
-            total_balance = cycle_group[cycle_group['Balance'] != 0]['Balance'].sum()  # Calculate Total Balance per cycle
+            total_balance = cycle_group[cycle_group['Balance'] != 0]['Balance'].sum()  # Summing the balance for each cycle
 
             # Adding the cycle-level productivity data
             cycle_productivity_table = pd.concat([cycle_productivity_table, pd.DataFrame([{
@@ -117,7 +117,7 @@ if uploaded_file is not None:
                 'Total PTP': total_ptp,
                 'Total RPC': total_rpc,
                 'Total PTP Amount': total_ptp_amount,
-                'Total Balance': total_balance,  # Including Total Balance per cycle
+                'Total Balance': total_balance,  # Only sum the total balance
             }])], ignore_index=True)
 
             # Update overall totals for cycles
