@@ -1,7 +1,5 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
-import plotly.express as px
 
 # Page configuration
 st.set_page_config(layout="wide", page_title="PRODUCTIVITY", page_icon="📊", initial_sidebar_state="expanded")
@@ -29,6 +27,9 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# No need to display the title, so we omit `st.title()`
+# st.title('Daily Remark Summary - Productivity Only') # This line is removed
+
 @st.cache_data
 def load_data(uploaded_file):
     df = pd.read_excel(uploaded_file)
@@ -54,14 +55,12 @@ if uploaded_file is not None:
         total_ptp_all = 0
         total_rpc_all = 0
         total_ptp_amount_all = 0
-        daily_ptp_amount = []
 
         for date, group in df.groupby(df['Date'].dt.date):
             total_connected = group[group['Call Status'] == 'CONNECTED']['Account No.'].count()
             total_ptp = group[group['Status'].str.contains('PTP', na=False) & (group['PTP Amount'] != 0)]['Account No.'].nunique()
             total_rpc = group[group['Status'].str.contains('RPC', na=False)]['Account No.'].nunique()
             total_ptp_amount = group[group['Status'].str.contains('PTP', na=False) & (group['PTP Amount'] != 0)]['PTP Amount'].sum()
-            daily_ptp_amount.append({'Date': date, 'Total PTP Amount': total_ptp_amount})
 
             # Adding the summary data to the dataframe
             productivity_table = pd.concat([productivity_table, pd.DataFrame([{
@@ -87,28 +86,12 @@ if uploaded_file is not None:
             'Total PTP Amount': total_ptp_amount_all,
         }])], ignore_index=True)
 
-        return productivity_table, daily_ptp_amount
+        return productivity_table
 
     # Display the productivity summary
     st.write("## Productivity Summary Table")
-    productivity_summary_table, daily_ptp_amount = calculate_productivity_summary(df)
+    productivity_summary_table = calculate_productivity_summary(df)
     st.write(productivity_summary_table)
-
-    # Plot bar chart for Total Connected, PTP, and RPC
-    fig, ax = plt.subplots(figsize=(10, 6))
-    ax.bar(productivity_summary_table['Day'].iloc[:-1], productivity_summary_table['Total Connected'].iloc[:-1], label='Total Connected')
-    ax.bar(productivity_summary_table['Day'].iloc[:-1], productivity_summary_table['Total PTP'].iloc[:-1], label='Total PTP', alpha=0.7)
-    ax.bar(productivity_summary_table['Day'].iloc[:-1], productivity_summary_table['Total RPC'].iloc[:-1], label='Total RPC', alpha=0.7)
-    ax.set_xlabel('Day')
-    ax.set_ylabel('Count')
-    ax.set_title('Daily Productivity - Total Connected, PTP, RPC')
-    ax.legend()
-    st.pyplot(fig)
-
-    # Plot line chart for Total PTP Amount per Day
-    ptp_df = pd.DataFrame(daily_ptp_amount)
-    fig2 = px.line(ptp_df, x='Date', y='Total PTP Amount', title='Total PTP Amount Over Days')
-    st.plotly_chart(fig2)
 
     col5, col6 = st.columns(2)
 
