@@ -41,6 +41,11 @@ if uploaded_file is not None:
             'Day', 'Total Connected', 'Total PTP', 'Total RPC', 'Total PTP Amount'
         ])
         
+        total_connected_all = 0
+        total_ptp_all = 0
+        total_rpc_all = 0
+        total_ptp_amount_all = 0
+
         for date, group in df.groupby(df['Date'].dt.date):
             total_connected = group[group['Call Status'] == 'CONNECTED']['Account No.'].count()
             total_ptp = group[group['Status'].str.contains('PTP', na=False) & (group['PTP Amount'] != 0)]['Account No.'].nunique()
@@ -55,7 +60,22 @@ if uploaded_file is not None:
                 'Total RPC': total_rpc,
                 'Total PTP Amount': total_ptp_amount,
             }])], ignore_index=True)
-        
+
+            # Update overall totals
+            total_connected_all += total_connected
+            total_ptp_all += total_ptp
+            total_rpc_all += total_rpc
+            total_ptp_amount_all += total_ptp_amount
+
+        # Add a row with total values
+        productivity_table = pd.concat([productivity_table, pd.DataFrame([{
+            'Day': 'Total',
+            'Total Connected': total_connected_all,
+            'Total PTP': total_ptp_all,
+            'Total RPC': total_rpc_all,
+            'Total PTP Amount': total_ptp_amount_all,
+        }])], ignore_index=True)
+
         return productivity_table
 
     # Display the productivity summary
@@ -79,6 +99,11 @@ if uploaded_file is not None:
             'Day', 'Collector', 'Total Connected', 'Total PTP', 'Total RPC', 'Total PTP Amount'
         ])
         
+        total_connected_all_collector = 0
+        total_ptp_all_collector = 0
+        total_rpc_all_collector = 0
+        total_ptp_amount_all_collector = 0
+
         for (date, collector), collector_group in filtered_df[~filtered_df['Remark By'].str.upper().isin(['SYSTEM'])].groupby([filtered_df['Date'].dt.date, 'Remark By']):
             total_connected = collector_group[collector_group['Call Status'] == 'CONNECTED']['Account No.'].count()
             total_ptp = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['PTP Amount'] != 0)]['Account No.'].nunique()
@@ -94,5 +119,21 @@ if uploaded_file is not None:
                 'Total RPC': total_rpc,
                 'Total PTP Amount': total_ptp_amount,
             }])], ignore_index=True)
-        
+
+            # Update overall totals for collectors
+            total_connected_all_collector += total_connected
+            total_ptp_all_collector += total_ptp
+            total_rpc_all_collector += total_rpc
+            total_ptp_amount_all_collector += total_ptp_amount
+
+        # Add a row with total values for the collector summary
+        collector_productivity_summary = pd.concat([collector_productivity_summary, pd.DataFrame([{
+            'Day': 'Total',
+            'Collector': 'All Collectors',
+            'Total Connected': total_connected_all_collector,
+            'Total PTP': total_ptp_all_collector,
+            'Total RPC': total_rpc_all_collector,
+            'Total PTP Amount': total_ptp_amount_all_collector,
+        }])], ignore_index=True)
+
         st.write(collector_productivity_summary)
