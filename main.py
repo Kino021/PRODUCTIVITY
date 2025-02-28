@@ -44,7 +44,6 @@ if uploaded_file is not None:
 
     # Function to calculate productivity summary
     def calculate_productivity_summary(df):
-        # Remove the "Total Balance" column from the table definition
         productivity_table = pd.DataFrame(columns=[
             'Day', 'Total Connected', 'Total PTP', 'Total RPC', 'Total PTP Amount'
         ])
@@ -90,6 +89,55 @@ if uploaded_file is not None:
     st.write("## Productivity Summary Table")
     productivity_summary_table = calculate_productivity_summary(df)
     st.write(productivity_summary_table)
+
+    # --- Calculate Productivity per Cycle ---
+    def calculate_productivity_per_cycle(df):
+        cycle_productivity_table = pd.DataFrame(columns=[
+            'Cycle (Service No.)', 'Total Connected', 'Total PTP', 'Total RPC', 'Total PTP Amount'
+        ])
+        
+        total_connected_all_cycle = 0
+        total_ptp_all_cycle = 0
+        total_rpc_all_cycle = 0
+        total_ptp_amount_all_cycle = 0
+
+        # Group by Service No. (cycle)
+        for service_no, cycle_group in df.groupby('Service No.'):
+            total_connected = cycle_group[cycle_group['Call Status'] == 'CONNECTED']['Account No.'].count()
+            total_ptp = cycle_group[cycle_group['Status'].str.contains('PTP', na=False) & (cycle_group['PTP Amount'] != 0)]['Account No.'].nunique()
+            total_rpc = cycle_group[cycle_group['Status'].str.contains('RPC', na=False)]['Account No.'].nunique()
+            total_ptp_amount = cycle_group[cycle_group['Status'].str.contains('PTP', na=False) & (cycle_group['PTP Amount'] != 0)]['PTP Amount'].sum()
+
+            # Adding the cycle-level productivity data
+            cycle_productivity_table = pd.concat([cycle_productivity_table, pd.DataFrame([{
+                'Cycle (Service No.)': service_no,
+                'Total Connected': total_connected,
+                'Total PTP': total_ptp,
+                'Total RPC': total_rpc,
+                'Total PTP Amount': total_ptp_amount,
+            }])], ignore_index=True)
+
+            # Update overall totals for cycles
+            total_connected_all_cycle += total_connected
+            total_ptp_all_cycle += total_ptp
+            total_rpc_all_cycle += total_rpc
+            total_ptp_amount_all_cycle += total_ptp_amount
+
+        # Add a row with total values for cycles
+        cycle_productivity_table = pd.concat([cycle_productivity_table, pd.DataFrame([{
+            'Cycle (Service No.)': 'Total',
+            'Total Connected': total_connected_all_cycle,
+            'Total PTP': total_ptp_all_cycle,
+            'Total RPC': total_rpc_all_cycle,
+            'Total PTP Amount': total_ptp_amount_all_cycle,
+        }])], ignore_index=True)
+
+        return cycle_productivity_table
+
+    # Display the productivity per cycle summary
+    st.write("## Productivity Summary per Cycle (Service No.)")
+    cycle_productivity_summary = calculate_productivity_per_cycle(df)
+    st.write(cycle_productivity_summary)
 
     col5, col6 = st.columns(2)
 
