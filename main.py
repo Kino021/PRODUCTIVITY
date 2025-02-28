@@ -96,7 +96,7 @@ if uploaded_file is not None:
         filtered_df = df[(df['Date'].dt.date >= start_date) & (df['Date'].dt.date <= end_date)]
 
         collector_productivity_summary = pd.DataFrame(columns=[
-            'Day', 'Collector', 'Total Connected', 'Total PTP', 'Total RPC', 'Total PTP Amount'
+            'Day', 'Collector', 'Total Connected', 'Total PTP', 'Total RPC', 'Total PTP Amount', 'Balance Amount'
         ])
         
         total_connected_all_collector = 0
@@ -120,7 +120,7 @@ if uploaded_file is not None:
                 'Total PTP': total_ptp,
                 'Total RPC': total_rpc,
                 'Total PTP Amount': total_ptp_amount,
-                'Balance Amount': balance_amount,
+                'Balance Amount': total_balance_amount,  # Corrected this part
             }])], ignore_index=True)
 
             # Update overall totals for collectors
@@ -128,8 +128,7 @@ if uploaded_file is not None:
             total_ptp_all_collector += total_ptp
             total_rpc_all_collector += total_rpc
             total_ptp_amount_all_collector += total_ptp_amount
-            total_balance_amount_all_collector += total_ptp_amount
-            
+            total_balance_amount_all_collector += total_balance_amount  # Fixed
 
         # Add a row with total values for the collector summary
         collector_productivity_summary = pd.concat([collector_productivity_summary, pd.DataFrame([{
@@ -139,7 +138,7 @@ if uploaded_file is not None:
             'Total PTP': total_ptp_all_collector,
             'Total RPC': total_rpc_all_collector,
             'Total PTP Amount': total_ptp_amount_all_collector,
-            'Balance Amount: total_ total_balance_amount_all_collector,
+            'Balance Amount': total_balance_amount_all_collector,  # Corrected here
         }])], ignore_index=True)
 
         st.write(collector_productivity_summary)
