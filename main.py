@@ -19,6 +19,14 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+# Hide the title from the page
+st.markdown("""
+    <style>
+        .css-1v0mbdj {display: none;}
+    </style>
+""", unsafe_allow_html=True)
+
+# This title will be hidden, so the user won't see it
 st.title('Daily Remark Summary - Productivity Only')
 
 @st.cache_data
