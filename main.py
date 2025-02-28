@@ -103,12 +103,14 @@ if uploaded_file is not None:
         total_ptp_all_collector = 0
         total_rpc_all_collector = 0
         total_ptp_amount_all_collector = 0
+        total_balance_amount_all_collector = 0
 
         for (date, collector), collector_group in filtered_df[~filtered_df['Remark By'].str.upper().isin(['SYSTEM'])].groupby([filtered_df['Date'].dt.date, 'Remark By']):
             total_connected = collector_group[collector_group['Call Status'] == 'CONNECTED']['Account No.'].count()
             total_ptp = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['PTP Amount'] != 0)]['Account No.'].nunique()
             total_rpc = collector_group[collector_group['Status'].str.contains('RPC', na=False)]['Account No.'].nunique()
             total_ptp_amount = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['PTP Amount'] != 0)]['PTP Amount'].sum()
+            total_balance_amount = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['Balance'] != 0)]['Balance'].sum()
 
             # Adding the collector's productivity data
             collector_productivity_summary = pd.concat([collector_productivity_summary, pd.DataFrame([{
@@ -118,6 +120,7 @@ if uploaded_file is not None:
                 'Total PTP': total_ptp,
                 'Total RPC': total_rpc,
                 'Total PTP Amount': total_ptp_amount,
+                'Balance Amount': balance_amount,
             }])], ignore_index=True)
 
             # Update overall totals for collectors
@@ -125,6 +128,8 @@ if uploaded_file is not None:
             total_ptp_all_collector += total_ptp
             total_rpc_all_collector += total_rpc
             total_ptp_amount_all_collector += total_ptp_amount
+            total_balance_amount_all_collector += total_ptp_amount
+            
 
         # Add a row with total values for the collector summary
         collector_productivity_summary = pd.concat([collector_productivity_summary, pd.DataFrame([{
@@ -134,6 +139,7 @@ if uploaded_file is not None:
             'Total PTP': total_ptp_all_collector,
             'Total RPC': total_rpc_all_collector,
             'Total PTP Amount': total_ptp_amount_all_collector,
+            'Balance Amount: total_ total_balance_amount_all_collector,
         }])], ignore_index=True)
 
         st.write(collector_productivity_summary)
