@@ -41,20 +41,40 @@ if uploaded_file is not None:
             'Day', 'Total Connected', 'Total PTP', 'Total RPC', 'Total PTP Amount'
         ])
         
-        for date, group in df.groupby(df['Date'].dt.date):
-            total_connected = group[group['Call Status'] == 'CONNECTED']['Account No.'].count()
-            total_ptp = group[group['Status'].str.contains('PTP', na=False) & (group['PTP Amount'] != 0)]['Account No.'].nunique()
-            total_rpc = group[group['Status'].str.contains('RPC', na=False)]['Account No.'].nunique()
-            total_ptp_amount = group[group['Status'].str.contains('PTP', na=False) & (group['PTP Amount'] != 0)]['PTP Amount'].sum()
+        total_connected = 0
+        total_ptp = 0
+        total_rpc = 0
+        total_ptp_amount = 0
 
-            # Adding the summary data to the dataframe
+        for date, group in df.groupby(df['Date'].dt.date):
+            day_connected = group[group['Call Status'] == 'CONNECTED']['Account No.'].count()
+            day_ptp = group[group['Status'].str.contains('PTP', na=False) & (group['PTP Amount'] != 0)]['Account No.'].nunique()
+            day_rpc = group[group['Status'].str.contains('RPC', na=False)]['Account No.'].nunique()
+            day_ptp_amount = group[group['Status'].str.contains('PTP', na=False) & (group['PTP Amount'] != 0)]['PTP Amount'].sum()
+
+            # Adding the daily summary data to the dataframe
             productivity_table = pd.concat([productivity_table, pd.DataFrame([{
                 'Day': date,
-                'Total Connected': total_connected,
-                'Total PTP': total_ptp,
-                'Total RPC': total_rpc,
-                'Total PTP Amount': total_ptp_amount,
+                'Total Connected': day_connected,
+                'Total PTP': day_ptp,
+                'Total RPC': day_rpc,
+                'Total PTP Amount': day_ptp_amount,
             }])], ignore_index=True)
+
+            # Update totals
+            total_connected += day_connected
+            total_ptp += day_ptp
+            total_rpc += day_rpc
+            total_ptp_amount += day_ptp_amount
+
+        # Adding the total row
+        productivity_table = pd.concat([productivity_table, pd.DataFrame([{
+            'Day': 'Total',
+            'Total Connected': total_connected,
+            'Total PTP': total_ptp,
+            'Total RPC': total_rpc,
+            'Total PTP Amount': total_ptp_amount,
+        }])], ignore_index=True)
         
         return productivity_table
 
@@ -76,8 +96,14 @@ if uploaded_file is not None:
         filtered_df = df[(df['Date'].dt.date >= start_date) & (df['Date'].dt.date <= end_date)]
 
         collector_productivity_summary = pd.DataFrame(columns=[
-            'Day', 'Collector', 'Total Connected', 'Total PTP', 'Total RPC', 'Total PTP Amount'
+            'Day', 'Collector', 'Total Connected', 'Total PTP', 'Total RPC', 'Total PTP Amount', 'Balance Amount'
         ])
+
+        collector_total_connected = 0
+        collector_total_ptp = 0
+        collector_total_rpc = 0
+        collector_total_ptp_amount = 0
+        collector_total_balance_amount = 0
         
         for (date, collector), collector_group in filtered_df[~filtered_df['Remark By'].str.upper().isin(['SYSTEM'])].groupby([filtered_df['Date'].dt.date, 'Remark By']):
             total_connected = collector_group[collector_group['Call Status'] == 'CONNECTED']['Account No.'].count()
@@ -96,5 +122,23 @@ if uploaded_file is not None:
                 'Total PTP Amount': total_ptp_amount,
                 'Balance Amount': balance_amount,
             }])], ignore_index=True)
-        
+
+            # Update totals for the collectors
+            collector_total_connected += total_connected
+            collector_total_ptp += total_ptp
+            collector_total_rpc += total_rpc
+            collector_total_ptp_amount += total_ptp_amount
+            collector_total_balance_amount += balance_amount
+
+        # Adding the collector's total row
+        collector_productivity_summary = pd.concat([collector_productivity_summary, pd.DataFrame([{
+            'Day': 'Total',
+            'Collector': 'Total',
+            'Total Connected': collector_total_connected,
+            'Total PTP': collector_total_ptp,
+            'Total RPC': collector_total_rpc,
+            'Total PTP Amount': collector_total_ptp_amount,
+            'Balance Amount': collector_total_balance_amount,
+        }])], ignore_index=True)
+
         st.write(collector_productivity_summary)
