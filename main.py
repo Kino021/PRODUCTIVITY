@@ -114,7 +114,6 @@ if uploaded_file is not None:
 
             # Adding the collector's productivity data
             collector_productivity_summary = pd.concat([collector_productivity_summary, pd.DataFrame([{
-                'Day': date,
                 'Collector': collector,
                 'Total Connected': total_connected,
                 'Total PTP': total_ptp,
@@ -132,7 +131,6 @@ if uploaded_file is not None:
 
         # Adding the collector's total row
         collector_productivity_summary = pd.concat([collector_productivity_summary, pd.DataFrame([{
-            'Day': 'Total',
             'Collector': 'Total',
             'Total Connected': collector_total_connected,
             'Total PTP': collector_total_ptp,
