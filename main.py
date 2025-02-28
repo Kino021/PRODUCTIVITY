@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 
+# Page configuration
 st.set_page_config(layout="wide", page_title="PRODUCTIVITY", page_icon="📊", initial_sidebar_state="expanded")
 
 # Apply dark mode
@@ -19,15 +20,15 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Hide the title from the page
+# Remove title from the page by hiding it via CSS
 st.markdown("""
     <style>
         .css-1v0mbdj {display: none;}
     </style>
 """, unsafe_allow_html=True)
 
-# This title will be hidden, so the user won't see it
-st.title('Daily Remark Summary - Productivity Only')
+# No need to display the title, so we omit `st.title()`
+# st.title('Daily Remark Summary - Productivity Only') # This line is removed
 
 @st.cache_data
 def load_data(uploaded_file):
@@ -37,6 +38,7 @@ def load_data(uploaded_file):
                                    , 'DASANTOS', 'SEMIJARES', 'GMCARIAN', 'RRRECTO', 'EASORIANO', 'EUGALERA','JATERRADO','LMLABRADOR'])]  # Exclude specific Remark By
     return df
 
+# File uploader in sidebar
 uploaded_file = st.sidebar.file_uploader("Upload Daily Remark File", type="xlsx")
 
 if uploaded_file is not None:
