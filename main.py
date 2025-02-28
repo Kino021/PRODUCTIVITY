@@ -37,11 +37,11 @@ if uploaded_file is not None:
 
     # Function to calculate productivity summary
     def calculate_productivity_summary(df):
-        productivity_table = pd.DataFrame(columns=[
-            'Day', 'Total Connected', 'Total PTP', 'Total RPC', 'Total PTP Amount'
+        productivity_table = pd.DataFrame(columns=[ 
+            'Day', 'Cycle', 'Total Connected', 'Total PTP', 'Total RPC', 'Total PTP Amount'
         ])
         
-        for date, group in df.groupby(df['Date'].dt.date):
+        for (date, cycle), group in df.groupby([df['Date'].dt.date, 'Card No. Prefix']):  # Group by date and cycle
             total_connected = group[group['Call Status'] == 'CONNECTED']['Account No.'].count()
             total_ptp = group[group['Status'].str.contains('PTP', na=False) & (group['PTP Amount'] != 0)]['Account No.'].nunique()
             total_rpc = group[group['Status'].str.contains('RPC', na=False)]['Account No.'].nunique()
@@ -50,6 +50,7 @@ if uploaded_file is not None:
             # Adding the summary data to the dataframe
             productivity_table = pd.concat([productivity_table, pd.DataFrame([{
                 'Day': date,
+                'Cycle': cycle,
                 'Total Connected': total_connected,
                 'Total PTP': total_ptp,
                 'Total RPC': total_rpc,
@@ -76,10 +77,13 @@ if uploaded_file is not None:
         filtered_df = df[(df['Date'].dt.date >= start_date) & (df['Date'].dt.date <= end_date)]
 
         collector_productivity_summary = pd.DataFrame(columns=[
-            'Day', 'Collector', 'Total Connected', 'Total PTP', 'Total RPC', 'Total PTP Amount'
+            'Day', 'Collector', 'Cycle', 'Total Connected', 'Total PTP', 'Total RPC', 'Total PTP Amount'
         ])
         
-        for (date, collector), collector_group in filtered_df[~filtered_df['Remark By'].str.upper().isin(['SYSTEM'])].groupby([filtered_df['Date'].dt.date, 'Remark By']):
+        # Add cycle column extraction
+        filtered_df['Card No. Prefix'] = filtered_df['Card No.'].str[:2]  # Get first two characters for cycle
+
+        for (date, collector, cycle), collector_group in filtered_df[~filtered_df['Remark By'].str.upper().isin(['SYSTEM'])].groupby([filtered_df['Date'].dt.date, 'Remark By', 'Card No. Prefix']):
             total_connected = collector_group[collector_group['Call Status'] == 'CONNECTED']['Account No.'].count()
             total_ptp = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['PTP Amount'] != 0)]['Account No.'].nunique()
             total_rpc = collector_group[collector_group['Status'].str.contains('RPC', na=False)]['Account No.'].nunique()
@@ -89,10 +93,11 @@ if uploaded_file is not None:
             collector_productivity_summary = pd.concat([collector_productivity_summary, pd.DataFrame([{
                 'Day': date,
                 'Collector': collector,
+                'Cycle': cycle,
                 'Total Connected': total_connected,
                 'Total PTP': total_ptp,
                 'Total RPC': total_rpc,
                 'Total PTP Amount': total_ptp_amount,
             }])], ignore_index=True)
-        
+
         st.write(collector_productivity_summary)
