@@ -8,15 +8,22 @@ st.set_page_config(layout="wide", page_title="PRODUCTIVITY", page_icon="📊", i
 @st.cache_data
 def load_data(uploaded_file):
     df = pd.read_excel(uploaded_file)
-    df = df[~df['Remark By'].isin([
+
+    # Exclude specific "Remark By" values
+    excluded_users = [
         'FGPANGANIBAN', 'KPILUSTRISIMO', 'BLRUIZ', 'MMMEJIA', 'SAHERNANDEZ', 
         'GPRAMOS', 'JGCELIZ', 'JRELEMINO', 'HVDIGNOS', 'SPMADRID', 'DRTORRALBA', 
         'RRCARLIT', 'MEBEJER', 'DASANTOS', 'SEMIJARES', 'GMCARIAN', 'RRRECTO', 
         'EASORIANO', 'EUGALERA', 'JATERRADO', 'LMLABRADOR'
-    ])]  # Exclude specific "Remark By"
-    
-    # Convert "Time" column to datetime format
-    df['Time'] = pd.to_datetime(df['Time'], format='%H:%M:%S').dt.time  # Ensures it's time-based
+    ]
+    df = df[~df['Remark By'].isin(excluded_users)]
+
+    # Convert "Time" column to datetime format (handle errors)
+    df['Time'] = pd.to_datetime(df['Time'], errors='coerce')  # 'coerce' turns invalid values into NaT
+
+    # Drop rows where "Time" is NaT (empty or invalid time values)
+    df = df.dropna(subset=['Time'])
+
     return df
 
 # Define Time Intervals
@@ -33,8 +40,9 @@ time_intervals = {
 
 # Function to classify time into intervals
 def classify_time(row_time):
+    row_time_str = row_time.strftime('%H:%M:%S')  # Convert to string
     for label, (start, end) in time_intervals.items():
-        if start <= row_time.strftime('%H:%M:%S') <= end:
+        if start <= row_time_str <= end:
             return label
     return "Outside Hours"
 
@@ -44,7 +52,7 @@ uploaded_file = st.sidebar.file_uploader("Upload Daily Remark File", type="xlsx"
 if uploaded_file:
     df = load_data(uploaded_file)
 
-    # Classify each entry into a time interval
+    # Apply time classification
     df['Time Interval'] = df['Time'].apply(classify_time)
 
     # Calculate Productivity Summary per Time Interval
