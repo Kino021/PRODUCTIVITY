@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import re
 
 # ------------------- PAGE CONFIGURATION -------------------
 st.set_page_config(
@@ -22,6 +21,12 @@ st.markdown("""
             border-radius: 10px;
             font-weight: bold;
         }
+        .category-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 30px;
+            color: #FF8C00;
+        }
         .card {
             background-color: #f8f9fa;
             border-radius: 10px;
@@ -34,6 +39,17 @@ st.markdown("""
 
 # ------------------- HEADER -------------------
 st.markdown('<div class="header">📊 PRODUCTIVITY DASHBOARD</div>', unsafe_allow_html=True)
+
+# ------------------- DATA LOADING FUNCTION -------------------
+@st.cache_data
+def load_data(uploaded_file):
+    df = pd.read_excel(uploaded_file)
+    df['Date'] = pd.to_datetime(df['Date'])
+    df = df[~df['Remark By'].isin(['FGPANGANIBAN', 'KPILUSTRISIMO', 'BLRUIZ', 'MMMEJIA', 'SAHERNANDEZ', 'GPRAMOS',
+                                   'JGCELIZ', 'JRELEMINO', 'HVDIGNOS', 'RALOPE', 'DRTORRALBA', 'RRCARLIT', 'MEBEJER',
+                                   'DASANTOS', 'SEMIJARES', 'GMCARIAN', 'RRRECTO', 'JMBORROMEO', 'EUGALERA', 'JATERRADO', 
+                                   'LMLABRADOR', 'EASORIANO'])]  # Exclude specific users
+    return df
 
 # ------------------- DATA PROCESSING FOR COLLECTOR SUMMARY -------------------
 def generate_collector_summary(df):
