@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import re
 
 # Page configuration
 st.set_page_config(layout="wide", page_title="PRODUCTIVITY", page_icon="📊", initial_sidebar_state="expanded")
@@ -78,11 +79,6 @@ if uploaded_file is not None:
             Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False)].sum())
         ).reset_index()
 
-        # Add total row
-        total_row = summary_table.sum(numeric_only=True)
-        total_row['Date'] = 'Total'
-        summary_table = pd.concat([summary_table, total_row.to_frame().T], ignore_index=True)
-
         return summary_table
 
     st.markdown('<div class="card">', unsafe_allow_html=True)
@@ -90,13 +86,10 @@ if uploaded_file is not None:
     st.dataframe(calculate_productivity_summary(df), width=1500)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # --- Productivity Summary per Cycle (Grouped by Date in Two Columns) ---
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.write("## 📆 Productivity Summary per Cycle (Grouped by Date)")
-    
+    # --- Productivity Summary per Cycle ---
     def calculate_productivity_per_cycle(df):
         df['Service No.'] = df['Service No.'].astype(str)
-        df['Cycle'] = df['Service No.'].apply(lambda x: x if x.isnumeric() else "NO IDENTIFIER OF CYCLE")
+        df['Cycle'] = df['Service No.'].apply(lambda x: re.findall(r'\b\d{1,2}\b', x)[0] if re.findall(r'\b\d{1,2}\b', x) else "NO IDENTIFIER OF CYCLE")
         
         cycle_summary = df.groupby([df['Date'].dt.date, 'Cycle']).agg(
             Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
@@ -110,21 +103,24 @@ if uploaded_file is not None:
 
     cycle_summary = calculate_productivity_per_cycle(df)
     unique_dates = cycle_summary['Date'].unique()
+
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.write("## 📆 Productivity Summary per Cycle (Grouped by Date)")
     
     for i in range(0, len(unique_dates), 2):
         cols = st.columns(2)
         with cols[0]:
-            st.markdown(f'<div class="card">', unsafe_allow_html=True)
+            st.markdown('<div class="card">', unsafe_allow_html=True)
             st.write(f"### 📅 Date: {unique_dates[i]}")
             st.dataframe(cycle_summary[cycle_summary['Date'] == unique_dates[i]], width=700)
             st.markdown('</div>', unsafe_allow_html=True)
         if i + 1 < len(unique_dates):
             with cols[1]:
-                st.markdown(f'<div class="card">', unsafe_allow_html=True)
+                st.markdown('<div class="card">', unsafe_allow_html=True)
                 st.write(f"### 📅 Date: {unique_dates[i + 1]}")
                 st.dataframe(cycle_summary[cycle_summary['Date'] == unique_dates[i + 1]], width=700)
                 st.markdown('</div>', unsafe_allow_html=True)
-        st.markdown("---")  # Spacer for clarity
+        st.markdown("---")
     st.markdown('</div>', unsafe_allow_html=True)
 
     # --- Productivity Summary per Collector ---
