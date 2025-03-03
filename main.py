@@ -43,22 +43,16 @@ if uploaded_file is not None:
     # --- Productivity Summary per Day ---
     def calculate_productivity_summary(df):
         summary_table = df.groupby(df['Date'].dt.date).agg(
-            Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').count()),
+            Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
             Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False).sum()),
             Total_RPC=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('RPC', na=False).sum()),
             Total_PTP_Amount=('PTP Amount', 'sum')
         ).reset_index()
 
         # Add total row
-        total_row = pd.DataFrame({
-            'Date': ['Total'],
-            'Total_Connected': [summary_table['Total_Connected'].sum()],
-            'Total_PTP': [summary_table['Total_PTP'].sum()],
-            'Total_RPC': [summary_table['Total_RPC'].sum()],
-            'Total_PTP_Amount': [summary_table['Total_PTP_Amount'].sum()]
-        })
-
-        summary_table = pd.concat([summary_table, total_row], ignore_index=True)
+        total_row = summary_table.sum(numeric_only=True)
+        total_row['Date'] = 'Total'
+        summary_table = pd.concat([summary_table, total_row.to_frame().T], ignore_index=True)
 
         return summary_table
 
@@ -68,22 +62,16 @@ if uploaded_file is not None:
     # --- Productivity Summary per Cycle ---
     def calculate_productivity_per_cycle(df):
         cycle_summary = df.groupby('Service No.').agg(
-            Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').count()),
+            Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
             Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False).sum()),
             Total_RPC=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('RPC', na=False).sum()),
             Total_PTP_Amount=('PTP Amount', 'sum')
         ).reset_index()
 
         # Add total row
-        total_row = pd.DataFrame({
-            'Service No.': ['Total'],
-            'Total_Connected': [cycle_summary['Total_Connected'].sum()],
-            'Total_PTP': [cycle_summary['Total_PTP'].sum()],
-            'Total_RPC': [cycle_summary['Total_RPC'].sum()],
-            'Total_PTP_Amount': [cycle_summary['Total_PTP_Amount'].sum()]
-        })
-
-        cycle_summary = pd.concat([cycle_summary, total_row], ignore_index=True)
+        total_row = cycle_summary.sum(numeric_only=True)
+        total_row['Service No.'] = 'Total'
+        cycle_summary = pd.concat([cycle_summary, total_row.to_frame().T], ignore_index=True)
 
         return cycle_summary
 
@@ -99,24 +87,17 @@ if uploaded_file is not None:
     filtered_df = df[(df['Date'].dt.date >= start_date) & (df['Date'].dt.date <= end_date)]
 
     collector_summary = filtered_df.groupby([filtered_df['Date'].dt.date, 'Remark By']).agg(
-        Total_Connected=('Account No.', lambda x: (filtered_df.loc[x.index, 'Call Status'] == 'CONNECTED').count()),
+        Total_Connected=('Account No.', lambda x: (filtered_df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
         Total_PTP=('Account No.', lambda x: filtered_df.loc[x.index, 'Status'].str.contains('PTP', na=False).sum()),
         Total_RPC=('Account No.', lambda x: filtered_df.loc[x.index, 'Status'].str.contains('RPC', na=False).sum()),
         Total_PTP_Amount=('PTP Amount', 'sum'),
-        Balance_Amount=('Balance', 'sum')  # Balance Amount is unchanged
+        Balance_Amount=('Balance', 'sum')
     ).reset_index()
 
     # Add total row
-    total_row = pd.DataFrame({
-        'Date': ['Total'],
-        'Remark By': ['All Collectors'],
-        'Total_Connected': [collector_summary['Total_Connected'].sum()],
-        'Total_PTP': [collector_summary['Total_PTP'].sum()],
-        'Total_RPC': [collector_summary['Total_RPC'].sum()],
-        'Total_PTP_Amount': [collector_summary['Total_PTP_Amount'].sum()],
-        'Balance_Amount': [collector_summary['Balance_Amount'].sum()]  # Keeping balance amount summary unchanged
-    })
-
-    collector_summary = pd.concat([collector_summary, total_row], ignore_index=True)
+    total_row = collector_summary.sum(numeric_only=True)
+    total_row['Date'] = 'Total'
+    total_row['Remark By'] = 'All Collectors'
+    collector_summary = pd.concat([collector_summary, total_row.to_frame().T], ignore_index=True)
 
     st.write(collector_summary)
