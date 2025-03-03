@@ -79,7 +79,7 @@ if uploaded_file:
     def calculate_productivity_summary(df):
         """Generates a productivity summary grouped by date."""
         summary = df.groupby(df['Date'].dt.date).agg(
-            Total_Connected=('Call Status', lambda x: (x == 'CONNECTED').sum()),  # FIXED COUNTING
+            Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
             Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False).sum()),
             Total_RPC=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('RPC', na=False).sum()),
             Total_PTP_Amount=('PTP Amount', 'sum'),
@@ -111,7 +111,7 @@ if uploaded_file:
         df['Cycle'] = df['Service No.'].apply(extract_two_digit_cycle)
 
         cycle_summary = df.groupby([df['Date'].dt.date, 'Cycle']).agg(
-            Total_Connected=('Call Status', lambda x: (x == 'CONNECTED').sum()),  # FIXED COUNTING
+            Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
             Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False).sum()),
             Total_RPC=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('RPC', na=False).sum()),
             Total_PTP_Amount=('PTP Amount', 'sum'),
@@ -150,14 +150,20 @@ if uploaded_file:
     def calculate_productivity_per_collector(df):
         """Generates a productivity summary grouped by Date and Collector."""
         collector_summary = df.groupby([df['Date'].dt.date, 'Remark By']).agg(
-            Total_Connected=('Call Status', lambda x: (x == 'CONNECTED').sum()),  # FIXED COUNTING
+            Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
             Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False).sum()),
             Total_RPC=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('RPC', na=False).sum()),
             Total_PTP_Amount=('PTP Amount', 'sum'),
             Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False)].sum())
         ).reset_index()
 
+        # Add total row
+        total_row = collector_summary.sum(numeric_only=True)
+        total_row['Date'] = 'Total'
+        total_row['Remark By'] = 'ALL COLLECTORS'
+        collector_summary = pd.concat([collector_summary, total_row.to_frame().T], ignore_index=True)
+
         return collector_summary
 
     st.dataframe(calculate_productivity_per_collector(filtered_df), width=1500)
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True) please change the counting of connected call. just follow the refference of Productivity Summary per Collector Total_connected call
