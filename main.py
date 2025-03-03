@@ -4,16 +4,16 @@ import pandas as pd
 # Page configuration
 st.set_page_config(layout="wide", page_title="PRODUCTIVITY", page_icon="📊", initial_sidebar_state="expanded")
 
-# Apply dark mode
+# Apply light red background for the main app and light blue for the sidebar
 st.markdown(
     """
     <style>
     .stApp {
-        background-color: #2E2E2E;
-        color: white;
+        background-color: #FFCCCC;
+        color: black;
     }
     .stSidebar {
-        background-color: #2E2E2E;
+        background-color: #CCEEFF;
     }
     </style>
     """,
