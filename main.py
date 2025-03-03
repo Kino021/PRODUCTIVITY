@@ -75,7 +75,7 @@ if uploaded_file is not None:
 
         return productivity_table
 
-    # Show overall productivity summary table
+    # Show productivity summary table with a refined look
     st.write("## Overall Productivity Summary")
     productivity_summary = calculate_productivity_summary(df)
     st.dataframe(productivity_summary.style.format({
@@ -84,35 +84,6 @@ if uploaded_file is not None:
         'PTP Rate': '{:.2f}%',
         'Call Drop Ratio': '{:.2f}%'
     }).background_gradient(cmap='coolwarm', axis=0), width=1400)
-
-    # Summary of All (Aggregated View)
-    st.write("## Summary of All (Aggregated Overview)")
-
-    all_accounts = df[df['Remark'] != 'Broken Promise']['Account No.'].nunique()
-    all_total_dialed = df[df['Remark'] != 'Broken Promise']['Account No.'].count()
-
-    all_connected = df[df['Call Status'] == 'CONNECTED']['Account No.'].count()
-    all_connected_accounts = df[df['Call Status'] == 'CONNECTED']['Account No.'].nunique()
-
-    all_penetration_rate = (all_total_dialed / all_accounts * 100) if all_accounts != 0 else None
-    all_connected_rate = (all_connected / all_total_dialed * 100) if all_total_dialed != 0 else None
-
-    all_ptp_accounts = df[(df['Status'].str.contains('PTP', na=False)) & (df['PTP Amount'] != 0)]['Account No.'].nunique()
-    all_ptp_rate = (all_ptp_accounts / all_connected_accounts * 100) if all_connected_accounts != 0 else None
-
-    all_call_drop_count = df[df['Call Status'] == 'DROPPED']['Account No.'].count()
-    all_call_drop_ratio = (all_call_drop_count / all_connected * 100) if all_connected != 0 else None
-
-    st.write(f"**Total Accounts**: {all_accounts}")
-    st.write(f"**Total Dialed**: {all_total_dialed}")
-    st.write(f"**Penetration Rate**: {round(all_penetration_rate, 2)}%" if all_penetration_rate is not None else "N/A")
-    st.write(f"**Total Connected**: {all_connected}")
-    st.write(f"**Connected Rate**: {round(all_connected_rate, 2)}%" if all_connected_rate is not None else "N/A")
-    st.write(f"**Connected Accounts**: {all_connected_accounts}")
-    st.write(f"**PTP Accounts**: {all_ptp_accounts}")
-    st.write(f"**PTP Rate**: {round(all_ptp_rate, 2)}%" if all_ptp_rate is not None else "N/A")
-    st.write(f"**Total Call Drops**: {all_call_drop_count}")
-    st.write(f"**Call Drop Ratio**: {round(all_call_drop_ratio, 2)}%" if all_call_drop_ratio is not None else "N/A")
 
     # Table by date range filter
     min_date = df['Date'].min().date()
@@ -150,16 +121,3 @@ if uploaded_file is not None:
         'PTP Amount': '₹ {:.2f}',
         'Balance Amount': '₹ {:.2f}'
     }).background_gradient(cmap='viridis', axis=0), width=1400)
-
-    # Summary Per Cycle (Grouped by Service No.)
-    st.write("## Productivity Summary Per Cycle")
-
-    for cycle, cycle_group in df.groupby('Service No.'):
-        st.write(f"### Cycle: {cycle}")
-        cycle_summary = calculate_productivity_summary(cycle_group)
-        st.dataframe(cycle_summary.style.format({
-            'Penetration Rate (%)': '{:.2f}%',
-            'Connected Rate (%)': '{:.2f}%',
-            'PTP Rate': '{:.2f}%',
-            'Call Drop Ratio': '{:.2f}%'
-        }).background_gradient(cmap='coolwarm', axis=0), width=1400)
