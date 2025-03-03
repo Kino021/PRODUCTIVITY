@@ -24,6 +24,11 @@ st.markdown(
         flex-direction: column;
         align-items: center;
     }
+    .two-column {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
     </style>
     """,
     unsafe_allow_html=True
@@ -49,27 +54,7 @@ if uploaded_file is not None:
     # Exclude 'SYSTEM' and 'system' in the Remark By column
     df = df[~df['Remark By'].str.contains('SYSTEM', case=False, na=False)]
 
-    # --- Productivity Summary per Day ---
-    def calculate_productivity_summary(df):
-        summary_table = df.groupby(df['Date'].dt.date).agg(
-            Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
-            Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False).sum()),
-            Total_RPC=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('RPC', na=False).sum()),
-            Total_PTP_Amount=('PTP Amount', 'sum'),
-            Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False)].sum())
-        ).reset_index()
-
-        # Add total row
-        total_row = summary_table.sum(numeric_only=True)
-        total_row['Date'] = 'Total'
-        summary_table = pd.concat([summary_table, total_row.to_frame().T], ignore_index=True)
-
-        return summary_table
-
-    st.write("## Productivity Summary Table")
-    st.dataframe(calculate_productivity_summary(df), width=1500)
-
-    # --- Productivity Summary per Cycle (Grouped by Date with Spacer) ---
+    # --- Productivity Summary per Cycle (Grouped by Date in Two Columns) ---
     st.write("## Productivity Summary per Cycle (Grouped by Date)")
     def calculate_productivity_per_cycle(df):
         df['Service No.'] = df['Service No.'].astype(str)
@@ -86,10 +71,17 @@ if uploaded_file is not None:
         return cycle_summary
 
     cycle_summary = calculate_productivity_per_cycle(df)
-    for date in cycle_summary['Date'].unique():
-        st.write(f"### Date: {date}")
-        st.write("""<div class='spacer'></div>""", unsafe_allow_html=True)
-        st.dataframe(cycle_summary[cycle_summary['Date'] == date], width=1500)
+    unique_dates = cycle_summary['Date'].unique()
+    
+    for i in range(0, len(unique_dates), 2):
+        cols = st.columns(2)
+        with cols[0]:
+            st.write(f"### Date: {unique_dates[i]}")
+            st.dataframe(cycle_summary[cycle_summary['Date'] == unique_dates[i]], width=700)
+        if i + 1 < len(unique_dates):
+            with cols[1]:
+                st.write(f"### Date: {unique_dates[i + 1]}")
+                st.dataframe(cycle_summary[cycle_summary['Date'] == unique_dates[i + 1]], width=700)
         st.markdown("---")  # Spacer for clarity
 
     # --- Productivity Summary per Collector ---
