@@ -96,12 +96,12 @@ if uploaded_file:
 
 for (date, collector), collector_group in filtered_df.groupby([filtered_df['Date'].dt.date, 'Remark By']):
     # Filter out rows where there's no PTP amount or where PTP amount is zero
-    ptp_filtered_group = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['PTP Amount'] != 0)]
+    ptp_filtered_group = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['PTP Amount'] > 0)]
     
     total_connected = collector_group[collector_group['Call Status'] == 'CONNECTED']['Account No.'].count()
-    total_ptp = ptp_filtered_group['Account No.'].nunique()  # Only count unique PTP accounts
+    total_ptp = ptp_filtered_group['Account No.'].nunique()  # Only count unique PTP accounts where PTP Amount > 0
     total_rpc = collector_group[collector_group['Status'].str.contains('RPC', na=False)]['Account No.'].nunique()
-    ptp_amount = ptp_filtered_group['PTP Amount'].sum()  # Sum PTP amounts where it's non-zero
+    ptp_amount = ptp_filtered_group['PTP Amount'].sum()  # Sum PTP amounts where it's greater than 0
     balance_amount = ptp_filtered_group['Balance'].sum()  # Sum Balance amounts for PTP rows where Balance is non-zero
     
     collector_summary = pd.concat([collector_summary, pd.DataFrame([{
