@@ -40,11 +40,6 @@ st.markdown(
         box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
         margin-bottom: 20px;
     }
-
-    /* Center Elements */
-    .center {
-        text-align: center;
-    }
     </style>
     """,
     unsafe_allow_html=True
@@ -72,6 +67,28 @@ if uploaded_file is not None:
 
     # Exclude 'SYSTEM' and 'system' in the Remark By column
     df = df[~df['Remark By'].str.contains('SYSTEM', case=False, na=False)]
+
+    # --- Productivity Summary Table ---
+    def calculate_productivity_summary(df):
+        summary_table = df.groupby(df['Date'].dt.date).agg(
+            Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
+            Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False).sum()),
+            Total_RPC=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('RPC', na=False).sum()),
+            Total_PTP_Amount=('PTP Amount', 'sum'),
+            Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False)].sum())
+        ).reset_index()
+
+        # Add total row
+        total_row = summary_table.sum(numeric_only=True)
+        total_row['Date'] = 'Total'
+        summary_table = pd.concat([summary_table, total_row.to_frame().T], ignore_index=True)
+
+        return summary_table
+
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.write("## 📊 Productivity Summary Table")
+    st.dataframe(calculate_productivity_summary(df), width=1500)
+    st.markdown('</div>', unsafe_allow_html=True)
 
     # --- Productivity Summary per Cycle (Grouped by Date in Two Columns) ---
     st.markdown('<div class="card">', unsafe_allow_html=True)
@@ -126,12 +143,6 @@ if uploaded_file is not None:
         Total_PTP_Amount=('PTP Amount', 'sum'),
         Balance_Amount=('Balance', lambda x: filtered_df.loc[x.index, 'Balance'][filtered_df.loc[x.index, 'Status'].str.contains('PTP', na=False)].sum())
     ).reset_index()
-
-    # Add total row
-    total_row = collector_summary.sum(numeric_only=True)
-    total_row['Date'] = 'Total'
-    total_row['Remark By'] = 'All Collectors'
-    collector_summary = pd.concat([collector_summary, total_row.to_frame().T], ignore_index=True)
 
     st.dataframe(collector_summary, width=1500)
     st.markdown('</div>', unsafe_allow_html=True)
