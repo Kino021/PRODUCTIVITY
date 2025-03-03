@@ -166,4 +166,4 @@ if uploaded_file:
         return collector_summary
 
     st.dataframe(calculate_productivity_per_collector(filtered_df), width=1500)
-    st.markdown('</div>', unsafe_allow_html=True) please change the counting of connected call. just follow the refference of Productivity Summary per Collector Total_connected call
+    st.markdown('</div>', unsafe_allow_html=True)
