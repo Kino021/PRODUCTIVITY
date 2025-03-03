@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 # Page configuration
-st.set_page_config(layout="wide", page_title="Simpsons Productivity Dashboard", page_icon="🍩")
+st.set_page_config(layout="wide", page_title="Productivity Dashboard", page_icon="🍩")
 
 # Apply Simpsons-inspired styling
 st.markdown(
