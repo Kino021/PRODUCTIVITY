@@ -66,7 +66,7 @@ def load_data(uploaded_file):
     return df
 
 # ------------------- FILE UPLOADER -------------------
-uploaded_file = st.sidebar.file_uploader("📂 Upload Daily Remark File", type="xlsx")
+uploaded_file = st.midbar.file_uploader("📂 Upload Daily Remark File", type="xlsx")
 
 # ------------------- MAIN LOGIC -------------------
 if uploaded_file:
