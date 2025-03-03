@@ -75,13 +75,14 @@ df['Cycle'] = df['Service No.'].astype(str)
 
 # Grouping data and aggregating with the necessary conditions
 cycle_summary = df.groupby([df['Date'].dt.date, 'Cycle']).agg(
-    Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
-    Total_PTP=('Account No.', lambda x: ((df.loc[x.index, 'Status'].str.contains('PTP', na=False)) & (df.loc[x.index, 'PTP Amount'].notnull())).sum()),
-    Total_RPC=('Account No.', lambda x: (df.loc[x.index, 'Status'].str.contains('RPC', na=False)).sum()),
+    Total_Connected=('Account No.', 'count'),  # Count all Account No.s, assuming each is connected
+    Total_PTP=('PTP Amount', 'count'),  # Count PTP Amount if it exists
+    Total_RPC=('Account No.', lambda x: (df.loc[x.index, 'Status'].str.contains('RPC', na=False)).sum()),  # Count RPC
     Total_PTP_Amount=('PTP Amount', 'sum'),
-    Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False)].sum())
+    Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False)].sum())  # Balance for PTP
 ).reset_index()
 
+# Display the resulting dataframe
 st.dataframe(cycle_summary, width=1500)
 st.markdown('</div>', unsafe_allow_html=True)
 
