@@ -18,6 +18,12 @@ st.markdown(
     .spacer {
         height: 30px;
     }
+    .full-width {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
     </style>
     """,
     unsafe_allow_html=True
@@ -43,33 +49,25 @@ if uploaded_file is not None:
     # Exclude 'SYSTEM' and 'system' in the Remark By column
     df = df[~df['Remark By'].str.contains('SYSTEM', case=False, na=False)]
 
-    # Layout columns for better spacing
-    col1, col2 = st.columns([2, 1])
+    # --- Productivity Summary per Day ---
+    def calculate_productivity_summary(df):
+        summary_table = df.groupby(df['Date'].dt.date).agg(
+            Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
+            Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False).sum()),
+            Total_RPC=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('RPC', na=False).sum()),
+            Total_PTP_Amount=('PTP Amount', 'sum'),
+            Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False)].sum())
+        ).reset_index()
 
-    with col1:
-        # --- Productivity Summary per Day ---
-        def calculate_productivity_summary(df):
-            summary_table = df.groupby(df['Date'].dt.date).agg(
-                Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
-                Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False).sum()),
-                Total_RPC=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('RPC', na=False).sum()),
-                Total_PTP_Amount=('PTP Amount', 'sum'),
-                Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False)].sum())
-            ).reset_index()
+        # Add total row
+        total_row = summary_table.sum(numeric_only=True)
+        total_row['Date'] = 'Total'
+        summary_table = pd.concat([summary_table, total_row.to_frame().T], ignore_index=True)
 
-            # Add total row
-            total_row = summary_table.sum(numeric_only=True)
-            total_row['Date'] = 'Total'
-            summary_table = pd.concat([summary_table, total_row.to_frame().T], ignore_index=True)
+        return summary_table
 
-            return summary_table
-
-        st.write("## Productivity Summary Table")
-        st.write(calculate_productivity_summary(df))
-
-    with col2:
-        st.write("## Additional Insights")
-        st.write("Here you can display graphs, charts, or extra data for analysis.")
+    st.write("## Productivity Summary Table")
+    st.dataframe(calculate_productivity_summary(df), width=1500)
 
     # --- Productivity Summary per Cycle (Grouped by Date with Spacer) ---
     st.write("## Productivity Summary per Cycle (Grouped by Date)")
@@ -91,7 +89,7 @@ if uploaded_file is not None:
     for date in cycle_summary['Date'].unique():
         st.write(f"### Date: {date}")
         st.write("""<div class='spacer'></div>""", unsafe_allow_html=True)
-        st.write(cycle_summary[cycle_summary['Date'] == date])
+        st.dataframe(cycle_summary[cycle_summary['Date'] == date], width=1500)
         st.markdown("---")  # Spacer for clarity
 
     # --- Productivity Summary per Collector ---
@@ -116,4 +114,4 @@ if uploaded_file is not None:
     total_row['Remark By'] = 'All Collectors'
     collector_summary = pd.concat([collector_summary, total_row.to_frame().T], ignore_index=True)
 
-    st.write(collector_summary)
+    st.dataframe(collector_summary, width=1500)
