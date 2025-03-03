@@ -15,6 +15,9 @@ st.markdown(
     .stSidebar {
         background-color: #FFCCCC;
     }
+    .spacer {
+        height: 30px;
+    }
     </style>
     """,
     unsafe_allow_html=True
@@ -85,6 +88,7 @@ if uploaded_file is not None:
     cycle_summary = calculate_productivity_per_cycle(df)
     for date in cycle_summary['Date'].unique():
         st.write(f"### Date: {date}")
+        st.write("""<div class='spacer'></div>""", unsafe_allow_html=True)
         st.write(cycle_summary[cycle_summary['Date'] == date])
         st.markdown("---")  # Spacer for clarity
 
