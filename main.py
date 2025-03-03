@@ -5,47 +5,78 @@ import re
 # ------------------- PAGE CONFIGURATION -------------------
 st.set_page_config(
     layout="wide", 
-    page_title="Productivity Dashboard", 
-    page_icon="📊", 
+    page_title="🦇 Gotham Productivity Dashboard", 
+    page_icon="🦇", 
     initial_sidebar_state="expanded"
 )
 
 # ------------------- GLOBAL STYLING -------------------
 st.markdown("""
     <style>
-        /* Sidebar styling */
+        body {
+            background-color: #121212;
+            color: #FFD700;
+        }
         .stSidebar {
-            background-color: black !important;
-            padding: 20px;
+            background-color: #000 !important;
+            color: #FFD700 !important;
         }
-        .stSidebar .stFileUploader, .stSidebar div {
-            color: white !important;
-        }
-
-        /* Header Styling */
         .header {
             text-align: center;
             padding: 20px;
             background: linear-gradient(to right, #FFD700, #FFA500);
-            color: white;
+            color: black;
             font-size: 24px;
             border-radius: 10px;
             font-weight: bold;
         }
-
-        /* Card Design */
+        .batman-logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .batman-logo img {
+            width: 150px;
+        }
         .card {
-            background-color: #f8f9fa;
+            background-color: #1c1c1c;
             border-radius: 10px;
             padding: 20px;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0px 4px 6px rgba(255, 215, 0, 0.5);
             margin-bottom: 20px;
+            transition: transform 0.3s ease-in-out;
+        }
+        .card:hover {
+            transform: scale(1.02);
         }
     </style>
 """, unsafe_allow_html=True)
 
 # ------------------- HEADER -------------------
-st.markdown('<div class="header">📊 PRODUCTIVITY DASHBOARD</div>', unsafe_allow_html=True)
+st.markdown('<div class="batman-logo"><img src="https://upload.wikimedia.org/wikipedia/en/3/3a/Batman_Logo.svg"></div>', unsafe_allow_html=True)
+st.markdown('<div class="header">🦇 Gotham Productivity Dashboard</div>', unsafe_allow_html=True)
+
+# ------------------- FILE UPLOADER -------------------
+uploaded_file = st.sidebar.file_uploader("📂 Upload Daily Remark File", type="xlsx")
+
+if uploaded_file:
+    df = pd.read_excel(uploaded_file)
+    df['Date'] = pd.to_datetime(df['Date'])
+    
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.subheader("📊 Productivity Summary Table")
+    st.dataframe(df)
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.subheader("📆 Productivity Summary per Cycle")
+    st.dataframe(df)
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.subheader("👤 Productivity Summary per Collector")
+    st.dataframe(df)
+    st.markdown('</div>', unsafe_allow_html=True)
+
 
 # ------------------- DATA LOADING FUNCTION -------------------
 @st.cache_data
