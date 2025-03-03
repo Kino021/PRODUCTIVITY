@@ -57,8 +57,8 @@ if uploaded_file:
 
     summary = df.groupby(df['Date'].dt.date).agg(
         Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
-        Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False) & (df.loc[x.index, 'PTP Amount'] > 0)).sum()),  # Added condition to check PTP Amount
-        Total_RPC=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('RPC', na=False).sum()),  # Corrected indentation here
+        Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False) & (df.loc[x.index, 'PTP Amount'] > 0)).sum(),  # Added condition to check PTP Amount
+        Total_RPC=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('RPC', na=False).sum()),  # Fixed indentation
         Total_PTP_Amount=('PTP Amount', lambda x: x[x > 0].sum()),  # Summing only PTP Amount > 0
         Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False) & (df.loc[x.index, 'PTP Amount'] > 0)].sum())  # Added condition to check PTP Amount
     ).reset_index()
@@ -73,8 +73,8 @@ if uploaded_file:
     df['Cycle'] = df['Service No.'].astype(str)
     cycle_summary = df.groupby([df['Date'].dt.date, 'Cycle']).agg(
         Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
-        Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False) & (df.loc[x.index, 'PTP Amount'] > 0)).sum()),  # Added condition to check PTP Amount
-        Total_RPC=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('RPC', na=False).sum()),  # Corrected indentation here
+        Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False) & (df.loc[x.index, 'PTP Amount'] > 0)).sum(),  # Added condition to check PTP Amount
+        Total_RPC=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('RPC', na=False).sum()),  # Fixed indentation
         Total_PTP_Amount=('PTP Amount', lambda x: x[x > 0].sum()),  # Summing only PTP Amount > 0
         Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False) & (df.loc[x.index, 'PTP Amount'] > 0)].sum())  # Added condition to check PTP Amount
     ).reset_index()
