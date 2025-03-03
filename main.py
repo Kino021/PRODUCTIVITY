@@ -57,9 +57,9 @@ if uploaded_file:
 
     summary = df.groupby(df['Date'].dt.date).agg(
         Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
-        Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False).sum()),
-        Total_RPC=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('RPC', na=False).sum()),
-        Total_PTP_Amount=('PTP Amount', 'sum'),
+        Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False).nunique()),
+        Total_RPC=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('RPC', na=False).nunique()),
+        Total_PTP_Amount=('PTP Amount', lambda x: df.loc[x.index, 'PTP Amount'][df.loc[x.index, 'Status'].str.contains('PTP', na=False)].sum()),
         Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False)].sum())
     ).reset_index()
 
@@ -73,9 +73,9 @@ if uploaded_file:
     df['Cycle'] = df['Service No.'].astype(str)
     cycle_summary = df.groupby([df['Date'].dt.date, 'Cycle']).agg(
         Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
-        Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False).sum()),
-        Total_RPC=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('RPC', na=False).sum()),
-        Total_PTP_Amount=('PTP Amount', 'sum'),
+        Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False).nunique()),
+        Total_RPC=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('RPC', na=False).nunique()),
+        Total_PTP_Amount=('PTP Amount', lambda x: df.loc[x.index, 'PTP Amount'][df.loc[x.index, 'Status'].str.contains('PTP', na=False)].sum()),
         Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False)].sum())
     ).reset_index()
 
@@ -96,13 +96,10 @@ if uploaded_file:
 
     for (date, collector), collector_group in filtered_df.groupby([filtered_df['Date'].dt.date, 'Remark By']):
         total_connected = collector_group[collector_group['Call Status'] == 'CONNECTED']['Account No.'].count()
-        total_ptp = collector_group[(collector_group['Status'].str.contains('PTP', na=False)) & 
-                                    (collector_group['PTP Amount'] != 0)]['Account No.'].nunique()  # Corrected counting of PTP
+        total_ptp = collector_group[(collector_group['Status'].str.contains('PTP', na=False)) & (collector_group['PTP Amount'] != 0)]['Account No.'].nunique()  # Unique PTP count
         total_rpc = collector_group[collector_group['Status'].str.contains('RPC', na=False)]['Account No.'].nunique()
-        ptp_amount = collector_group[(collector_group['Status'].str.contains('PTP', na=False)) & 
-                                     (collector_group['PTP Amount'] != 0)]['PTP Amount'].sum()
-        balance_amount = collector_group[(collector_group['Status'].str.contains('PTP', na=False)) & 
-                                         (collector_group['Balance'] != 0)]['Balance'].sum()
+        ptp_amount = collector_group[(collector_group['Status'].str.contains('PTP', na=False)) & (collector_group['PTP Amount'] != 0)]['PTP Amount'].sum()  # Summing PTP Amount
+        balance_amount = collector_group[(collector_group['Status'].str.contains('PTP', na=False)) & (collector_group['Balance'] != 0)]['Balance'].sum()
 
         collector_summary = pd.concat([collector_summary, pd.DataFrame([{
             'Day': date,
