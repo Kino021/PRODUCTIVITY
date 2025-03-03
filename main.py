@@ -82,60 +82,24 @@ if uploaded_file:
     st.dataframe(cycle_summary, width=1500)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # ------------------- PRODUCTIVITY SUMMARY PER COLLECTOR -------------------
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("👤 Productivity Summary per Collector")
-
-    min_date, max_date = df['Date'].min().date(), df['Date'].max().date()
-    start_date, end_date = st.date_input("📅 Select date range", [min_date, max_date], min_value=min_date, max_value=max_date)
-
-    filtered_df = df[(df['Date'].dt.date >= start_date) & (df['Date'].dt.date <= end_date)]
-    filtered_df = filtered_df[~filtered_df['Remark By'].str.upper().isin(["SYSTEM"])]  # Exclude SYSTEM
-
-    collector_summary = pd.DataFrame(columns=[
-        'Day', 'Collector', 'Total Connected', 'Total PTP', 'Total RPC', 'PTP Amount', 'Balance Amount'
-    ])
-
-    for (date, collector), collector_group in filtered_df.groupby([filtered_df['Date'].dt.date, 'Remark By']):
-        total_connected = collector_group[collector_group['Call Status'] == 'CONNECTED']['Account No.'].count()
-        total_ptp = collector_group[collector_group['Status'].str.contains('PTP', na=False)]['Account No.'].nunique()
-        total_rpc = collector_group[collector_group['Status'].str.contains('RPC', na=False)]['Account No.'].nunique()
-        ptp_amount = collector_group[collector_group['Status'].str.contains('PTP', na=False)]['PTP Amount'].sum()
-        balance_amount = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['Balance'] != 0)]['Balance'].sum()
-
-        collector_summary = pd.concat([collector_summary, pd.DataFrame([{
-            'Day': date,
-            'Collector': collector,
-            'Total Connected': total_connected,
-            'Total PTP': total_ptp,
-            'Total RPC': total_rpc,
-            'PTP Amount': ptp_amount,
-            'Balance Amount': balance_amount
-        }])], ignore_index=True)
-
-    st.dataframe(collector_summary, width=1500)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    # ------------------- CLAIM PAID SUMMARY -------------------
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("💰 Claim Paid Summary Table")
-
-    cp_collector_summary = pd.DataFrame(columns=[
-        'Day', 'Collector', 'Total Claim Paid', 'Claim Paid Amount', 'Balance Amount'
-    ])
-
-    for (date, collector), collector_group in filtered_df.groupby([filtered_df['Date'].dt.date, 'Remark By']):
-        claim_paid_count = collector_group[collector_group['Reason For Default'].str.contains('CURED', na=False)]['Account No.'].nunique()
-        claim_paid_amount = collector_group[collector_group['Reason For Default'].str.contains('CURED', na=False)]['Claim Paid Amount'].sum()
-        balance_amount = collector_group[collector_group['Reason For Default'].str.contains('CURED', na=False) & (collector_group['Balance'] != 0)]['Balance'].sum()
-
-        cp_collector_summary = pd.concat([cp_collector_summary, pd.DataFrame([{
-            'Day': date,
-            'Collector': collector,
-            'Total Claim Paid': claim_paid_count,
-            'Claim Paid Amount': claim_paid_amount,
-            'Balance Amount': balance_amount
-        }])], ignore_index=True)
-
-    st.dataframe(cp_collector_summary, width=1500)
-    st.markdown('</div>', unsafe_allow_html=True)
+   collector_summary = pd.DataFrame(columns=[
+            'Day', 'Collector', 'Total Connected', 'Total PTP', 'Total RPC', 'PTP Amount'
+        ])
+        
+        for (date, collector), collector_group in filtered_df[~filtered_df['Remark By'].str.upper().isin(['SYSTEM'])].groupby([filtered_df['Date'].dt.date, 'Remark By']):
+            total_connected = collector_group[collector_group['Call Status'] == 'CONNECTED']['Account No.'].count()
+            total_ptp = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['PTP Amount'] != 0)]['Account No.'].nunique()
+            total_rpc = collector_group[collector_group['Status'].str.contains('RPC', na=False)]['Account No.'].nunique()
+            ptp_amount = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['PTP Amount'] != 0)]['PTP Amount'].sum()
+            
+            
+            collector_summary = pd.concat([collector_summary, pd.DataFrame([{
+                'Day': date,
+                'Collector': collector,
+                'Total Connected': total_connected,
+                'Total PTP': total_ptp,
+                'Total RPC': total_rpc,
+                'PTP Amount': ptp_amount,
+            }])], ignore_index=True)
+        
+        st.write(collector_summary)
