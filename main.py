@@ -56,6 +56,29 @@ uploaded_file = st.sidebar.file_uploader("📂 Upload Daily Remark File", type="
 if uploaded_file is not None:
     df = load_data(uploaded_file)
 
+    # --- Productivity Summary Table ---
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.write("## 📊 Productivity Summary Table")
+
+    def calculate_productivity_summary(df):
+        summary_table = df.groupby(df['Date'].dt.date).agg(
+            Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
+            Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False).sum()),
+            Total_RPC=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('RPC', na=False).sum()),
+            Total_PTP_Amount=('PTP Amount', 'sum'),
+            Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False)].sum())
+        ).reset_index()
+
+        # Add total row
+        total_row = summary_table.sum(numeric_only=True)
+        total_row['Date'] = 'Total'
+        summary_table = pd.concat([summary_table, total_row.to_frame().T], ignore_index=True)
+
+        return summary_table
+
+    st.dataframe(calculate_productivity_summary(df), width=1500)
+    st.markdown('</div>', unsafe_allow_html=True)
+
     # --- Productivity Summary per Cycle (Grouped by Date) ---
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.write("## 📆 Productivity Summary per Cycle (Grouped by Date)")
@@ -85,8 +108,7 @@ if uploaded_file is not None:
 
         return cycle_summary
 
-    cycle_summary = calculate_productivity_per_cycle(df)
-    st.dataframe(cycle_summary, width=1500)
+    st.dataframe(calculate_productivity_per_cycle(df), width=1500)
     st.markdown('</div>', unsafe_allow_html=True)
 
     # --- Productivity Summary per Collector ---
