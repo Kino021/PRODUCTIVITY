@@ -51,20 +51,24 @@ uploaded_file = st.sidebar.file_uploader("📂 Upload Daily Remark File", type="
 if uploaded_file:
     df = load_data(uploaded_file)
     
-    # ------------------- PRODUCTIVITY SUMMARY -------------------
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("📊 Productivity Summary Table")
+   # ------------------- PRODUCTIVITY SUMMARY PER CYCLE -------------------
+st.markdown('<div class="card">', unsafe_allow_html=True)
+st.subheader("📆 Productivity Summary per Cycle (Grouped by Date)")
 
-    summary = df.groupby(df['Date'].dt.date).agg(
-        Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
-        Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False).sum()),
-        Total_RPC=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('RPC', na=False).sum()),
-        Total_PTP_Amount=('PTP Amount', 'sum'),
-        Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False)].sum())
-    ).reset_index()
+df['Cycle'] = df['Service No.'].astype(str)
 
-    st.dataframe(summary, width=1500)
-    st.markdown('</div>', unsafe_allow_html=True)
+# Grouping data and aggregating with the necessary conditions
+cycle_summary = df.groupby([df['Date'].dt.date, 'Cycle']).agg(
+    Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
+    Total_PTP=('Account No.', lambda x: ((df.loc[x.index, 'Status'].str.contains('PTP', na=False)) & (df.loc[x.index, 'PTP Amount'].notnull())).sum()),
+    Total_RPC=('Account No.', lambda x: (df.loc[x.index, 'Status'].str.contains('RPC', na=False)).sum()),
+    Total_PTP_Amount=('PTP Amount', 'sum'),
+    Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False)].sum())
+).reset_index()
+
+st.dataframe(cycle_summary, width=1500)
+st.markdown('</div>', unsafe_allow_html=True)
+
 
     # ------------------- PRODUCTIVITY SUMMARY PER CYCLE -------------------
     st.markdown('<div class="card">', unsafe_allow_html=True)
