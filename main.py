@@ -62,7 +62,7 @@ if uploaded_file is not None:
 
     # --- Productivity Summary per Cycle ---
     def calculate_productivity_per_cycle(df):
-        cycle_summary = df.groupby('Service No.').agg(
+        cycle_summary = df.groupby('Cycle').agg(
             Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
             Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False).sum()),
             Total_RPC=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('RPC', na=False).sum()),
@@ -72,7 +72,7 @@ if uploaded_file is not None:
 
         # Add total row
         total_row = cycle_summary.sum(numeric_only=True)
-        total_row['Service No.'] = 'Total'
+        total_row['Cycle'] = 'Total'
         cycle_summary = pd.concat([cycle_summary, total_row.to_frame().T], ignore_index=True)
 
         return cycle_summary
