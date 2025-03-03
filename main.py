@@ -67,7 +67,7 @@ if uploaded_file:
     st.markdown('</div>', unsafe_allow_html=True)
 
 
-  # ------------------- PRODUCTIVITY SUMMARY PER CYCLE -------------------
+# ------------------- PRODUCTIVITY SUMMARY PER CYCLE -------------------
 st.markdown('<div class="card">', unsafe_allow_html=True)
 st.subheader("📆 Productivity Summary per Cycle (Grouped by Date)")
 
@@ -84,6 +84,7 @@ cycle_summary = df.groupby([df['Date'].dt.date, 'Cycle']).agg(
 
 st.dataframe(cycle_summary, width=1500)
 st.markdown('</div>', unsafe_allow_html=True)
+
 
 
     # ------------------- PRODUCTIVITY SUMMARY PER COLLECTOR -------------------
