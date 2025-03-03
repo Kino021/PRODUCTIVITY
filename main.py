@@ -46,16 +46,6 @@ def load_data(uploaded_file):
     return df
 
 # ------------------- FILE UPLOADER -------------------
-uploaded_file = st.sidebar.file_uploader("📂 Upload Daily Remark File", type="xlsx")
-
-if uploaded_file:
-    df = load_data(uploaded_file)
-    
-    # ------------------- PRODUCTIVITY SUMMARY -------------------
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("📊 Productivity Summary Table")
-
-    summary = df.groupby(df['Date'].dt.date).agg(
         Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
         Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False).sum()),
         Total_RPC=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('RPC', na=False).sum()),
@@ -63,15 +53,30 @@ if uploaded_file:
         Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False)].sum())
     ).reset_index()
 
-    st.dataframe(summary, width=1500)
+    # ------------------- DISPLAY SUMMARY -------------------
+    st.dataframe(summary)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # ------------------- PRODUCTIVITY SUMMARY PER COLLECTOR -------------------
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.subheader("📊 Productivity Summary per Collector")
+
+    collector_summary = df.groupby('Remark By').agg(
+        Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
+        Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False).sum()),
+        Total_RPC=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('RPC', na=False).sum()),
+        Total_PTP_Amount=('PTP Amount', 'sum'),
+        Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False)].sum())
+    ).reset_index()
+
+    st.dataframe(collector_summary)
     st.markdown('</div>', unsafe_allow_html=True)
 
     # ------------------- PRODUCTIVITY SUMMARY PER CYCLE -------------------
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("📆 Productivity Summary per Cycle (Grouped by Date)")
+    st.subheader("📊 Productivity Summary per Cycle (Grouped by Date)")
 
-    df['Cycle'] = df['Service No.'].astype(str)
-    cycle_summary = df.groupby([df['Date'].dt.date, 'Cycle']).agg(
+    cycle_summary = df.groupby([df['Date'].dt.date, 'Remark By']).agg(
         Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
         Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False).sum()),
         Total_RPC=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('RPC', na=False).sum()),
@@ -79,49 +84,8 @@ if uploaded_file:
         Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False)].sum())
     ).reset_index()
 
-    st.dataframe(cycle_summary, width=1500)
+    st.dataframe(cycle_summary)
     st.markdown('</div>', unsafe_allow_html=True)
 
-# ------------------- PRODUCTIVITY SUMMARY PER COLLECTOR -------------------
-st.markdown('<div class="card">', unsafe_allow_html=True)
-st.subheader("👥 Productivity Summary per Collector")
-
-# Assuming filtered_df should be df, and we exclude the 'SYSTEM' remark
-filtered_df = df[~df['Remark By'].str.upper().isin(['SYSTEM'])]
-
-# Prepare the collector_summary DataFrame
-collector_summary = pd.DataFrame(columns=[
-    'Day', 'Collector', 'Total Connected', 'Total PTP', 'Total RPC', 'PTP Amount', 'Balance Amount'
-])
-
-# Group by date and collector
-for (date, collector), collector_group in filtered_df.groupby([filtered_df['Date'].dt.date, 'Remark By']):
-    # Filter out rows with 'PTP FF' in Status and count rows with 'PTP'
-    ptp_group = collector_group[collector_group['Status'].str.contains('PTP', na=False) & 
-                               ~collector_group['Status'].str.contains('PTP FF', na=False)]
-    
-    total_connected = collector_group[collector_group['Call Status'] == 'CONNECTED']['Account No.'].count()
-    total_ptp = ptp_group['Account No.'].nunique()
-    total_rpc = collector_group[collector_group['Status'].str.contains('RPC', na=False)]['Account No.'].nunique()
-    
-    # Sum of PTP Amount where Status contains 'PTP' and exclude 'PTP FF'
-    ptp_amount = ptp_group['PTP Amount'].sum()
-    
-    # Sum of Balance where Status contains 'PTP' and exclude 'PTP FF' and PTP Amount is non-zero
-    balance_amount = ptp_group[ptp_group['PTP Amount'] != 0]['Balance'].sum()
-
-    # Only include the row if there's a non-zero PTP amount
-    if ptp_amount > 0:
-        collector_summary = pd.concat([collector_summary, pd.DataFrame([{
-            'Day': date,
-            'Collector': collector,
-            'Total Connected': total_connected,
-            'Total PTP': total_ptp,
-            'Total RPC': total_rpc,
-            'PTP Amount': ptp_amount,
-            'Balance Amount': balance_amount
-        }])], ignore_index=True)
-
-# Display the collector summary
-st.dataframe(collector_summary, width=1500)
-st.markdown('</div>', unsafe_allow_html=True)
+else:
+    st.write("Please upload a file to begin.")
