@@ -1,106 +1,141 @@
 import streamlit as st
 import pandas as pd
-import re
 
-# ------------------- PAGE CONFIGURATION -------------------
-st.set_page_config(
-    layout="wide", 
-    page_title="Productivity Dashboard", 
-    page_icon="📊", 
-    initial_sidebar_state="expanded"
+# Set up page configuration
+st.set_page_config(layout="wide", page_title="PL XDAYS REPORT", page_icon="📊", initial_sidebar_state="expanded")
+
+# Apply dark mode
+st.markdown(
+    """
+    <style>
+    .reportview-container {
+        background: #2E2E2E;
+        color: white;
+    }
+    .sidebar .sidebar-content {
+        background: #2E2E2E;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
 )
 
-# ------------------- GLOBAL STYLING -------------------
-st.markdown("""
-    <style>
-        .header {
-            text-align: center;
-            padding: 20px;
-            background: linear-gradient(to right, #FFD700, #FFA500);
-            color: white;
-            font-size: 24px;
-            border-radius: 10px;
-            font-weight: bold;
-        }
-        .card {
-            background-color: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-        }
-    </style>
-""", unsafe_allow_html=True)
+st.title('Daily Remark Summary')
 
-# ------------------- HEADER -------------------
-st.markdown('<div class="header">📊 PRODUCTIVITY DASHBOARD</div>', unsafe_allow_html=True)
-
-# ------------------- DATA LOADING FUNCTION -------------------
 @st.cache_data
 def load_data(uploaded_file):
     df = pd.read_excel(uploaded_file)
-    df['Date'] = pd.to_datetime(df['Date'])
-    df = df[~df['Remark By'].isin(['FGPANGANIBAN', 'KPILUSTRISIMO', 'BLRUIZ', 'MMMEJIA', 'SAHERNANDEZ', 'GPRAMOS',
-                                   'JGCELIZ', 'JRELEMINO', 'HVDIGNOS', 'RALOPE', 'DRTORRALBA', 'RRCARLIT', 'MEBEJER',
-                                   'DASANTOS', 'SEMIJARES', 'GMCARIAN', 'RRRECTO', 'JMBORROMEO', 'EUGALERA', 'JATERRADO', 'LMLABRADOR', 'EASORIANO'])]
+    df = df[~df['Remark By'].isin(['FGPANGANIBAN', 'KPILUSTRISIMO', 'BLRUIZ', 'MMMEJIA', 'SAHERNANDEZ', 'GPRAMOS'
+                                   , 'JGCELIZ', 'JRELEMINO', 'HVDIGNOS', 'SPMADRID', 'DRTORRALBA', 'RRCARLIT', 'MEBEJER'
+                                   , 'DASANTOS', 'SEMIJARES', 'GMCARIAN', 'RRRECTO', 'EASORIANO', 'EUGALERA','JATERRADO','LMLABRADOR'])]  
     return df
 
-# ------------------- FILE UPLOADER -------------------
-uploaded_file = st.sidebar.file_uploader("📂 Upload Daily Remark File", type="xlsx")
+uploaded_file = st.sidebar.file_uploader("Upload Daily Remark File", type="xlsx")
 
-if uploaded_file:
+if uploaded_file is not None:
     df = load_data(uploaded_file)
-    
-    # ------------------- PRODUCTIVITY SUMMARY -------------------
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("📊 Productivity Summary Table")
+    st.write(df)
 
-    summary = df.groupby(df['Date'].dt.date).agg(
-        Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
-        Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False).sum()),
-        Total_RPC=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('RPC', na=False).sum()),
-        Total_PTP_Amount=('PTP Amount', 'sum'),
-        Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False)].sum())
-    ).reset_index()
+    # Updated function to calculate and display productivity
+    def calculate_productivity_summary(df):
+        productivity_table = pd.DataFrame(columns=[
+            'Day', 'Accounts', 'Total Dialed', 'Penetration Rate (%)', 'Connected #', 
+            'Connected Rate (%)', 'Connected Accounts', 'PTP Accounts', 'PTP Rate', 'Call Drop #', 'Call Drop Ratio'
+        ])
 
-    st.dataframe(summary, width=1500)
-    st.markdown('</div>', unsafe_allow_html=True)
+        for date, group in df.groupby(df['Date'].dt.date):
+            accounts = group[group['Remark'] != 'Broken Promise']['Account No.'].nunique()
+            total_dialed = group[group['Remark'] != 'Broken Promise']['Account No.'].count()
 
-    # ------------------- PRODUCTIVITY SUMMARY PER CYCLE -------------------
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("📆 Productivity Summary per Cycle (Grouped by Date)")
+            connected = group[group['Call Status'] == 'CONNECTED']['Account No.'].count()
+            connected_rate = (connected / total_dialed * 100) if total_dialed != 0 else None
+            connected_accounts = group[group['Call Status'] == 'CONNECTED']['Account No.'].nunique()
 
-    df['Cycle'] = df['Service No.'].astype(str)
-    cycle_summary = df.groupby([df['Date'].dt.date, 'Cycle']).agg(
-        Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
-        Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False).sum()),
-        Total_RPC=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('RPC', na=False).sum()),
-        Total_PTP_Amount=('PTP Amount', 'sum'),
-        Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False)].sum())
-    ).reset_index()
+            penetration_rate = (total_dialed / accounts * 100) if accounts != 0 else None
 
-    st.dataframe(cycle_summary, width=1500)
-    st.markdown('</div>', unsafe_allow_html=True)
+            ptp_accounts = group[(group['Status'].str.contains('PTP', na=False)) & (group['PTP Amount'] != 0)]['Account No.'].nunique()
+            ptp_rate = (ptp_accounts / connected_accounts * 100) if connected_accounts != 0 else None
 
-    # ------------------- PRODUCTIVITY SUMMARY PER COLLECTOR -------------------
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("👤 Productivity Summary per Collector")
+            call_drop_count = group[group['Call Status'] == 'DROPPED']['Account No.'].count()
+            call_drop_ratio = (call_drop_count / connected * 100) if connected != 0 else None
 
-    min_date, max_date = df['Date'].min().date(), df['Date'].max().date()
-    start_date, end_date = st.date_input("📅 Select date range", [min_date, max_date], min_value=min_date, max_value=max_date)
+            productivity_table = pd.concat([productivity_table, pd.DataFrame([{
+                'Day': date,
+                'Accounts': accounts,
+                'Total Dialed': total_dialed,
+                'Penetration Rate (%)': f"{round(penetration_rate)}%" if penetration_rate is not None else None,
+                'Connected #': connected,
+                'Connected Rate (%)': f"{round(connected_rate)}%" if connected_rate is not None else None,
+                'Connected Accounts': connected_accounts,
+                'PTP Accounts': ptp_accounts,
+                'PTP Rate': f"{round(ptp_rate)}%" if ptp_rate is not None else None,
+                'Call Drop #': call_drop_count,
+                'Call Drop Ratio': f"{round(call_drop_ratio)}%" if call_drop_ratio is not None else None,
+            }])], ignore_index=True)
+
+        return productivity_table
+
+    # Show overall productivity summary table
+    st.write("## Overall Productivity Summary")
+    productivity_summary = calculate_productivity_summary(df)
+    st.dataframe(productivity_summary.style.format({
+        'Penetration Rate (%)': '{:.2f}%',
+        'Connected Rate (%)': '{:.2f}%',
+        'PTP Rate': '{:.2f}%',
+        'Call Drop Ratio': '{:.2f}%'
+    }).background_gradient(cmap='coolwarm', axis=0), width=1400)
+
+    # Summary of All (Aggregated View)
+    st.write("## Summary of All (Aggregated Overview)")
+
+    all_accounts = df[df['Remark'] != 'Broken Promise']['Account No.'].nunique()
+    all_total_dialed = df[df['Remark'] != 'Broken Promise']['Account No.'].count()
+
+    all_connected = df[df['Call Status'] == 'CONNECTED']['Account No.'].count()
+    all_connected_accounts = df[df['Call Status'] == 'CONNECTED']['Account No.'].nunique()
+
+    all_penetration_rate = (all_total_dialed / all_accounts * 100) if all_accounts != 0 else None
+    all_connected_rate = (all_connected / all_total_dialed * 100) if all_total_dialed != 0 else None
+
+    all_ptp_accounts = df[(df['Status'].str.contains('PTP', na=False)) & (df['PTP Amount'] != 0)]['Account No.'].nunique()
+    all_ptp_rate = (all_ptp_accounts / all_connected_accounts * 100) if all_connected_accounts != 0 else None
+
+    all_call_drop_count = df[df['Call Status'] == 'DROPPED']['Account No.'].count()
+    all_call_drop_ratio = (all_call_drop_count / all_connected * 100) if all_connected != 0 else None
+
+    st.write(f"**Total Accounts**: {all_accounts}")
+    st.write(f"**Total Dialed**: {all_total_dialed}")
+    st.write(f"**Penetration Rate**: {round(all_penetration_rate, 2)}%" if all_penetration_rate is not None else "N/A")
+    st.write(f"**Total Connected**: {all_connected}")
+    st.write(f"**Connected Rate**: {round(all_connected_rate, 2)}%" if all_connected_rate is not None else "N/A")
+    st.write(f"**Connected Accounts**: {all_connected_accounts}")
+    st.write(f"**PTP Accounts**: {all_ptp_accounts}")
+    st.write(f"**PTP Rate**: {round(all_ptp_rate, 2)}%" if all_ptp_rate is not None else "N/A")
+    st.write(f"**Total Call Drops**: {all_call_drop_count}")
+    st.write(f"**Call Drop Ratio**: {round(all_call_drop_ratio, 2)}%" if all_call_drop_ratio is not None else "N/A")
+
+    # Table by date range filter
+    min_date = df['Date'].min().date()
+    max_date = df['Date'].max().date()
+    start_date, end_date = st.date_input("Select Date Range", [min_date, max_date], min_value=min_date, max_value=max_date)
 
     filtered_df = df[(df['Date'].dt.date >= start_date) & (df['Date'].dt.date <= end_date)]
-    filtered_df = filtered_df[~filtered_df['Remark By'].str.upper().isin(["SYSTEM"])]
+    st.write(f"### Filtered Data from {start_date} to {end_date}")
+    st.dataframe(filtered_df)
 
-    collector_summary = pd.DataFrame()
+    # Display detailed table by Collector per Day
+    st.write("## Summary Table by Collector per Day")
+    collector_summary = pd.DataFrame(columns=[
+        'Day', 'Collector', 'Total Connected', 'Total PTP', 'Total RPC', 'PTP Amount'
+    ])
 
-    for (date, collector), collector_group in filtered_df.groupby([filtered_df['Date'].dt.date, 'Remark By']):
+    for (date, collector), collector_group in filtered_df[~filtered_df['Remark By'].str.upper().isin(['SYSTEM'])].groupby([filtered_df['Date'].dt.date, 'Remark By']):
         total_connected = collector_group[collector_group['Call Status'] == 'CONNECTED']['Account No.'].count()
         total_ptp = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['PTP Amount'] != 0)]['Account No.'].nunique()
         total_rpc = collector_group[collector_group['Status'].str.contains('RPC', na=False)]['Account No.'].nunique()
         ptp_amount = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['PTP Amount'] != 0)]['PTP Amount'].sum()
         balance_amount = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['Balance'] != 0)]['Balance'].sum()
-    
+
         collector_summary = pd.concat([collector_summary, pd.DataFrame([{
             'Day': date,
             'Collector': collector,
@@ -110,6 +145,21 @@ if uploaded_file:
             'PTP Amount': ptp_amount,
             'Balance Amount': balance_amount,
         }])], ignore_index=True)
-    
-    st.dataframe(collector_summary, width=1500)
-    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.dataframe(collector_summary.style.format({
+        'PTP Amount': '₹ {:.2f}',
+        'Balance Amount': '₹ {:.2f}'
+    }).background_gradient(cmap='viridis', axis=0), width=1400)
+
+    # Summary Per Cycle (Grouped by Service No.)
+    st.write("## Productivity Summary Per Cycle")
+
+    for cycle, cycle_group in df.groupby('Service No.'):
+        st.write(f"### Cycle: {cycle}")
+        cycle_summary = calculate_productivity_summary(cycle_group)
+        st.dataframe(cycle_summary.style.format({
+            'Penetration Rate (%)': '{:.2f}%',
+            'Connected Rate (%)': '{:.2f}%',
+            'PTP Rate': '{:.2f}%',
+            'Call Drop Ratio': '{:.2f}%'
+        }).background_gradient(cmap='coolwarm', axis=0), width=1400)
