@@ -64,7 +64,6 @@ if uploaded_file:
     ).reset_index()
 
     st.dataframe(summary, width=1500)
-    st.markdown('</div>', unsafe_allow_html=True)
 
 
 # ------------------- PRODUCTIVITY SUMMARY PER CYCLE -------------------
