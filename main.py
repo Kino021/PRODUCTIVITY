@@ -42,7 +42,7 @@ def load_data(uploaded_file):
     df['Date'] = pd.to_datetime(df['Date'])
     df = df[~df['Remark By'].isin(['FGPANGANIBAN', 'KPILUSTRISIMO', 'BLRUIZ', 'MMMEJIA', 'SAHERNANDEZ', 'GPRAMOS',
                                    'JGCELIZ', 'JRELEMINO', 'HVDIGNOS', 'RALOPE', 'DRTORRALBA', 'RRCARLIT', 'MEBEJER',
-                                   'DASANTOS', 'SEMIJARES', 'GMCARIAN', 'RRRECTO', 'JMBORROMEO', 'EUGALERA', 'JATERRADO', 'LMLABRADOR', 'EASORIANO'])]
+                                   'DASANTOS', 'SEMIJARES', 'GMCARIAN', 'RRRECTO', 'JMBORROMEO', 'EUGALERA', 'JATERRADO', 'LMLABRADOR', 'EASORIANO'])] 
     return df
 
 # ------------------- FILE UPLOADER -------------------
@@ -55,12 +55,13 @@ if uploaded_file:
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.subheader("📊 Productivity Summary Table")
 
+    # Modify the filtering logic to exclude "PTP FF" from PTP counts
     summary = df.groupby(df['Date'].dt.date).agg(
         Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
-        Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False).sum()),
+        Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False) & ~df.loc[x.index, 'Status'].str.contains('PTP FF', na=False)).sum()),
         Total_RPC=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('RPC', na=False).sum()),
-        Total_PTP_Amount=('PTP Amount', 'sum'),
-        Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False)].sum())
+        Total_PTP_Amount=('PTP Amount', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False) & ~df.loc[x.index, 'Status'].str.contains('PTP FF', na=False).sum()),
+        Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False) & ~df.loc[x.index, 'Status'].str.contains('PTP FF', na=False)].sum())
     ).reset_index()
 
     st.dataframe(summary, width=1500)
@@ -71,12 +72,14 @@ if uploaded_file:
     st.subheader("📆 Productivity Summary per Cycle (Grouped by Date)")
 
     df['Cycle'] = df['Service No.'].astype(str)
+
+    # Modify the filtering logic to exclude "PTP FF" from PTP counts
     cycle_summary = df.groupby([df['Date'].dt.date, 'Cycle']).agg(
         Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
-        Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False).sum()),
+        Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False) & ~df.loc[x.index, 'Status'].str.contains('PTP FF', na=False)).sum()),
         Total_RPC=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('RPC', na=False).sum()),
-        Total_PTP_Amount=('PTP Amount', 'sum'),
-        Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False)].sum())
+        Total_PTP_Amount=('PTP Amount', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False) & ~df.loc[x.index, 'Status'].str.contains('PTP FF', na=False).sum()),
+        Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False) & ~df.loc[x.index, 'Status'].str.contains('PTP FF', na=False)].sum())
     ).reset_index()
 
     st.dataframe(cycle_summary, width=1500)
@@ -94,13 +97,14 @@ if uploaded_file:
 
     collector_summary = pd.DataFrame()
 
+    # Modify the filtering logic to exclude "PTP FF" from PTP counts
     for (date, collector), collector_group in filtered_df.groupby([filtered_df['Date'].dt.date, 'Remark By']):
         total_connected = collector_group[collector_group['Call Status'] == 'CONNECTED']['Account No.'].count()
-        total_ptp = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['PTP Amount'] != 0)]['Account No.'].nunique()
+        total_ptp = collector_group[collector_group['Status'].str.contains('PTP', na=False) & ~collector_group['Status'].str.contains('PTP FF', na=False) & (collector_group['PTP Amount'] != 0)]['Account No.'].nunique()
         total_rpc = collector_group[collector_group['Status'].str.contains('RPC', na=False)]['Account No.'].nunique()
-        ptp_amount = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['PTP Amount'] != 0)]['PTP Amount'].sum()
-        balance_amount = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['Balance'] != 0)]['Balance'].sum()
-    
+        ptp_amount = collector_group[collector_group['Status'].str.contains('PTP', na=False) & ~collector_group['Status'].str.contains('PTP FF', na=False) & (collector_group['PTP Amount'] != 0)]['PTP Amount'].sum()
+        balance_amount = collector_group[collector_group['Status'].str.contains('PTP', na=False) & ~collector_group['Status'].str.contains('PTP FF', na=False) & (collector_group['Balance'] != 0)]['Balance'].sum()
+
         collector_summary = pd.concat([collector_summary, pd.DataFrame([{
             'Day': date,
             'Collector': collector,
@@ -110,6 +114,6 @@ if uploaded_file:
             'PTP Amount': ptp_amount,
             'Balance Amount': balance_amount,
         }])], ignore_index=True)
-    
+
     st.dataframe(collector_summary, width=1500)
     st.markdown('</div>', unsafe_allow_html=True)
