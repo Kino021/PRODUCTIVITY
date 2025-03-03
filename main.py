@@ -85,12 +85,6 @@ if uploaded_file:
             Total_PTP_Amount=('PTP Amount', 'sum'),
             Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False)].sum())
         ).reset_index()
-
-        # Add total row
-        total_row = summary.sum(numeric_only=True)
-        total_row['Date'] = 'Total'
-        summary = pd.concat([summary, total_row.to_frame().T], ignore_index=True)
-
         return summary
 
     st.dataframe(calculate_productivity_summary(df), width=1500)
@@ -100,15 +94,14 @@ if uploaded_file:
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.subheader("📆 Productivity Summary per Cycle (Grouped by Date)")
 
-    def extract_two_digit_cycle(value):
-        """Extracts a two-digit cycle number from the 'Service No.' field."""
-        match = re.findall(r'\b\d{2}\b', str(value))
-        return match[0] if match else "NO IDENTIFIER OF CYCLE"
+    def extract_cycle_from_service_no(service_no):
+        """Extracts the cycle number from the 'Service No.' field."""
+        match = re.search(r'\b\d{2}\b', str(service_no))
+        return match.group(0) if match else "NO IDENTIFIER OF CYCLE"
 
     def calculate_productivity_per_cycle(df):
         """Calculates productivity summary grouped by Date and Cycle."""
-        df['Service No.'] = df['Service No.'].astype(str)
-        df['Cycle'] = df['Service No.'].apply(extract_two_digit_cycle)
+        df['Cycle'] = df['Service No.'].astype(str).apply(extract_cycle_from_service_no)
 
         cycle_summary = df.groupby([df['Date'].dt.date, 'Cycle']).agg(
             Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
@@ -117,13 +110,6 @@ if uploaded_file:
             Total_PTP_Amount=('PTP Amount', 'sum'),
             Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False)].sum())
         ).reset_index()
-
-        # Add total row
-        total_row = cycle_summary.sum(numeric_only=True)
-        total_row['Date'] = 'Total'
-        total_row['Cycle'] = 'ALL CYCLES'
-        cycle_summary = pd.concat([cycle_summary, total_row.to_frame().T], ignore_index=True)
-
         return cycle_summary
 
     st.dataframe(calculate_productivity_per_cycle(df), width=1500)
@@ -132,20 +118,6 @@ if uploaded_file:
     # ------------------- PRODUCTIVITY SUMMARY PER COLLECTOR -------------------
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.subheader("👤 Productivity Summary per Collector")
-
-    # Date range selection
-    min_date, max_date = df['Date'].min().date(), df['Date'].max().date()
-    start_date, end_date = st.date_input(
-        "📅 Select date range", 
-        [min_date, max_date], 
-        min_value=min_date, 
-        max_value=max_date
-    )
-
-    filtered_df = df[(df['Date'].dt.date >= start_date) & (df['Date'].dt.date <= end_date)]
-
-    # Exclude system-generated remarks
-    filtered_df = filtered_df[~filtered_df['Remark By'].str.upper().isin(["SYSTEM"])]
 
     def calculate_productivity_per_collector(df):
         """Generates a productivity summary grouped by Date and Collector."""
@@ -156,14 +128,7 @@ if uploaded_file:
             Total_PTP_Amount=('PTP Amount', 'sum'),
             Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False)].sum())
         ).reset_index()
-
-        # Add total row
-        total_row = collector_summary.sum(numeric_only=True)
-        total_row['Date'] = 'Total'
-        total_row['Remark By'] = 'ALL COLLECTORS'
-        collector_summary = pd.concat([collector_summary, total_row.to_frame().T], ignore_index=True)
-
         return collector_summary
 
-    st.dataframe(calculate_productivity_per_collector(filtered_df), width=1500)
+    st.dataframe(calculate_productivity_per_collector(df), width=1500)
     st.markdown('</div>', unsafe_allow_html=True)
