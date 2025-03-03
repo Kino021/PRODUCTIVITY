@@ -1,57 +1,44 @@
 import streamlit as st
 import pandas as pd
-import re
 
 # Page configuration
-st.set_page_config(layout="wide", page_title="PRODUCTIVITY", page_icon="📊", initial_sidebar_state="expanded")
+st.set_page_config(layout="wide", page_title="Simpsons Productivity Dashboard", page_icon="🍩")
 
-# Apply global styling
+# Apply Simpsons-inspired styling
 st.markdown(
     """
     <style>
     /* General Styling */
     body, .stApp {
-        background-color: #F5F7FA !important; /* Light grey for better contrast */
+        background-color: #FFEB3B !important; /* Simpsons yellow */
         color: black !important;
-        font-family: Arial, sans-serif;
-    }
-    .stSidebar {
-        background-color: black !important; /* Dark sidebar */
-        padding: 20px;
-    }
-    .stSidebar .stFileUploader, .stSidebar div {
-        color: white !important;
+        font-family: 'Comic Sans MS', cursive, sans-serif;
     }
     
+    .stSidebar {
+        background-color: #1565C0 !important; /* Simpsons blue */
+        padding: 20px;
+        color: white !important;
+    }
+
     /* Header Design */
     .header {
         text-align: center;
         padding: 20px;
-        background: linear-gradient(to right, #0052D4, #4364F7, #6FB1FC);
+        background: #FF9800;
         color: white;
-        font-size: 26px;
+        font-size: 30px;
         font-weight: bold;
-        border-radius: 12px;
-        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
     }
     
     /* Card Layout */
     .card {
-        background-color: white;
-        border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.15);
-        margin-bottom: 20px;
-        transition: transform 0.2s;
-    }
-    .card:hover {
-        transform: scale(1.02);
-    }
-    
-    /* Table Styling */
-    .dataframe {
+        background-color: #FFF8E1;
         border-radius: 10px;
-        overflow: hidden;
+        padding: 20px;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+        margin-bottom: 20px;
     }
     </style>
     """,
@@ -59,7 +46,7 @@ st.markdown(
 )
 
 # HEADER
-st.markdown('<div class="header">📊 PRODUCTIVITY DASHBOARD</div>', unsafe_allow_html=True)
+st.markdown('<div class="header">🍩 Simpsons Productivity Dashboard</div>', unsafe_allow_html=True)
 
 @st.cache_data
 def load_data(uploaded_file):
@@ -70,7 +57,7 @@ def load_data(uploaded_file):
         'MEBEJER', 'DASANTOS', 'SEMIJARES', 'GMCARIAN', 'RRRECTO', 'EASORIANO', 
         'EUGALERA', 'JATERRADO', 'LMLABRADOR'
     ])]  
-    df['Date'] = pd.to_datetime(df['Date'])  # Ensure Date is in datetime format
+    df['Date'] = pd.to_datetime(df['Date'])  
     return df
 
 uploaded_file = st.sidebar.file_uploader("📂 Upload Daily Remark File", type="xlsx")
@@ -91,6 +78,10 @@ if uploaded_file is not None:
             Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False)].sum())
         ).reset_index()
 
+        total_row = summary_table.sum(numeric_only=True)
+        total_row['Date'] = 'Total'
+        summary_table = pd.concat([summary_table, total_row.to_frame().T], ignore_index=True)
+
         return summary_table
 
     st.markdown('<div class="card">', unsafe_allow_html=True)
@@ -99,9 +90,12 @@ if uploaded_file is not None:
     st.markdown('</div>', unsafe_allow_html=True)
 
     # --- Productivity Summary per Cycle ---
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.write("## 📆 Productivity Summary per Cycle (Grouped by Date)")
+
     def calculate_productivity_per_cycle(df):
         df['Service No.'] = df['Service No.'].astype(str)
-        df['Cycle'] = df['Service No.'].apply(lambda x: re.findall(r'\b\d{1,2}\b', x)[0] if re.findall(r'\b\d{1,2}\b', x) else "NO IDENTIFIER OF CYCLE")
+        df['Cycle'] = df['Service No.'].apply(lambda x: x if x.isnumeric() else "NO IDENTIFIER OF CYCLE")
         
         cycle_summary = df.groupby([df['Date'].dt.date, 'Cycle']).agg(
             Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
@@ -115,9 +109,6 @@ if uploaded_file is not None:
 
     cycle_summary = calculate_productivity_per_cycle(df)
     unique_dates = cycle_summary['Date'].unique()
-
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.write("## 📆 Productivity Summary per Cycle (Grouped by Date)")
     
     for i in range(0, len(unique_dates), 2):
         cols = st.columns(2)
