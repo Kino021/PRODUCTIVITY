@@ -9,20 +9,9 @@ st.set_page_config(layout="wide", page_title="PRODUCTIVITY", page_icon="📊", i
 def load_data(uploaded_file):
     df = pd.read_excel(uploaded_file)
 
-    # Exclude specific "Remark By" values
-    excluded_users = [
-        'FGPANGANIBAN', 'KPILUSTRISIMO', 'BLRUIZ', 'MMMEJIA', 'SAHERNANDEZ', 
-        'GPRAMOS', 'JGCELIZ', 'JRELEMINO', 'HVDIGNOS', 'SPMADRID', 'DRTORRALBA', 
-        'RRCARLIT', 'MEBEJER', 'DASANTOS', 'SEMIJARES', 'GMCARIAN', 'RRRECTO', 
-        'EASORIANO', 'EUGALERA', 'JATERRADO', 'LMLABRADOR'
-    ]
-    df = df[~df['Remark By'].isin(excluded_users)]
-
-    # Convert "Time" column to datetime format (handle errors)
+    # Convert "Time" column to datetime (handle missing values)
     df['Time'] = pd.to_datetime(df['Time'], errors='coerce')  # 'coerce' turns invalid values into NaT
-
-    # Drop rows where "Time" is NaT (empty or invalid time values)
-    df = df.dropna(subset=['Time'])
+    df = df.dropna(subset=['Time'])  # Drop rows with NaT time
 
     return df
 
@@ -58,15 +47,17 @@ if uploaded_file:
     # Calculate Productivity Summary per Time Interval
     productivity_per_time = df.groupby('Time Interval').agg({
         'Account No.': 'count',
-        'Status': lambda x: (x.str.contains('PTP', na=False) & df['PTP Amount'].ne(0)).sum(),
-        'Status': lambda x: (x.str.contains('RPC', na=False)).sum(),
         'PTP Amount': 'sum',
-        'Balance': 'sum'
+        'Balance': 'sum',
+        'Status': lambda x: (x.str.contains('PTP', na=False)).sum(),  # Total PTP count
     }).reset_index()
 
-    # Rename Columns
+    # Debugging step: Print column names
+    st.write("DEBUG: Columns in productivity_per_time →", productivity_per_time.columns.tolist())
+
+    # Rename Columns (match the exact number of columns in the dataframe)
     productivity_per_time.columns = [
-        'Time Interval', 'Total Connected', 'Total PTP', 'Total RPC', 'Total PTP Amount', 'Balance Amount'
+        'Time Interval', 'Total Connected', 'Total PTP Amount', 'Balance Amount', 'Total PTP'
     ]
 
     # Display the table
