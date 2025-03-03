@@ -55,12 +55,13 @@ if uploaded_file:
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.subheader("📊 Productivity Summary Table")
 
+    # Adjusting the logic for PTP Amount
     summary = df.groupby(df['Date'].dt.date).agg(
         Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
-        Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False) & (df.loc[x.index, 'PTP Amount'] > 0)).sum(),  # Added condition to check PTP Amount
+        Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False) & (df.loc[x.index, 'PTP Amount'] > 0)).sum(),  # Apply condition here
         Total_RPC=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('RPC', na=False).sum()),  # Fixed indentation
         Total_PTP_Amount=('PTP Amount', lambda x: x[x > 0].sum()),  # Summing only PTP Amount > 0
-        Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False) & (df.loc[x.index, 'PTP Amount'] > 0)].sum())  # Added condition to check PTP Amount
+        Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False) & (df.loc[x.index, 'PTP Amount'] > 0)].sum())  # Correct condition
     ).reset_index()
 
     st.dataframe(summary, width=1500)
@@ -73,10 +74,10 @@ if uploaded_file:
     df['Cycle'] = df['Service No.'].astype(str)
     cycle_summary = df.groupby([df['Date'].dt.date, 'Cycle']).agg(
         Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
-        Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False) & (df.loc[x.index, 'PTP Amount'] > 0)).sum(),  # Added condition to check PTP Amount
+        Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False) & (df.loc[x.index, 'PTP Amount'] > 0)).sum(),  # Apply condition here
         Total_RPC=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('RPC', na=False).sum()),  # Fixed indentation
         Total_PTP_Amount=('PTP Amount', lambda x: x[x > 0].sum()),  # Summing only PTP Amount > 0
-        Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False) & (df.loc[x.index, 'PTP Amount'] > 0)].sum())  # Added condition to check PTP Amount
+        Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False) & (df.loc[x.index, 'PTP Amount'] > 0)].sum())  # Correct condition
     ).reset_index()
 
     st.dataframe(cycle_summary, width=1500)
@@ -96,10 +97,10 @@ if uploaded_file:
 
     for (date, collector), collector_group in filtered_df.groupby([filtered_df['Date'].dt.date, 'Remark By']):
         total_connected = collector_group[collector_group['Call Status'] == 'CONNECTED']['Account No.'].count()
-        total_ptp = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['PTP Amount'] > 0)]['Account No.'].nunique()  # Added condition to check PTP Amount
+        total_ptp = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['PTP Amount'] > 0)]['Account No.'].nunique()  # Apply condition here
         total_rpc = collector_group[collector_group['Status'].str.contains('RPC', na=False)]['Account No.'].nunique()
-        ptp_amount = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['PTP Amount'] > 0)]['PTP Amount'].sum()  # Summing only PTP Amount > 0
-        balance_amount = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['Balance'] != 0) & (collector_group['PTP Amount'] > 0)]['Balance'].sum()  # Added condition to check PTP Amount
+        ptp_amount = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['PTP Amount'] > 0)]['PTP Amount'].sum()  # Sum only PTP Amount > 0
+        balance_amount = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['Balance'] != 0) & (collector_group['PTP Amount'] > 0)]['Balance'].sum()  # Correct condition
         
         collector_summary = pd.concat([collector_summary, pd.DataFrame([{
             'Day': date,
