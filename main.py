@@ -91,7 +91,7 @@ if uploaded_file is not None:
         Total_PTP=('Account No.', lambda x: filtered_df.loc[x.index, 'Status'].str.contains('PTP', na=False).sum()),
         Total_RPC=('Account No.', lambda x: filtered_df.loc[x.index, 'Status'].str.contains('RPC', na=False).sum()),
         Total_PTP_Amount=('PTP Amount', 'sum'),
-        Balance_Amount=('Balance', 'sum')
+        Balance_Amount=('Balance', lambda x: filtered_df.loc[x.index, 'Balance'][filtered_df.loc[x.index, 'Status'].str.contains('PTP', na=False)].sum())
     ).reset_index()
 
     # Add total row
