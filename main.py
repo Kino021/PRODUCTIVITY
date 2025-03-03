@@ -13,12 +13,13 @@ st.set_page_config(
 # ------------------- GLOBAL STYLING -------------------
 st.markdown("""
     <style>
-        /* Centering file uploader */
-        .block-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
+        /* Sidebar styling */
+        .stSidebar {
+            background-color: black !important;
+            padding: 20px;
+        }
+        .stSidebar .stFileUploader, .stSidebar div {
+            color: white !important;
         }
 
         /* Header Styling */
@@ -44,26 +45,22 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ------------------- HEADER -------------------
-st.markdown('<div class="header">📊 PRODUCTIVITY DASHBOARD</div>', unsafe_allow_html=True)
-
-# ------------------- FILE UPLOADER IN CENTER -------------------
-st.markdown("<div class='card' style='text-align: center;'>", unsafe_allow_html=True)
-uploaded_file = st.file_uploader("\U0001f4c2 Upload Daily Remark File", type="xlsx")
-st.markdown("</div>", unsafe_allow_html=True)
+st.markdown('<div class="header">PRODUCTIVITY DASHBOARD</div>', unsafe_allow_html=True)
 
 # ------------------- DATA LOADING FUNCTION -------------------
 @st.cache_data
 def load_data(uploaded_file):
     df = pd.read_excel(uploaded_file)
-    df['Date'] = pd.to_datetime(df['Date'])
-    excluded_names = [
-        'FGPANGANIBAN', 'KPILUSTRISIMO', 'BLRUIZ', 'MMMEJIA', 'SAHERNANDEZ', 'GPRAMOS',
-        'JGCELIZ', 'JRELEMINO', 'HVDIGNOS', 'RALOPE', 'DRTORRALBA', 'RRCARLIT', 'MEBEJER',
-        'DASANTOS', 'SEMIJARES', 'GMCARIAN', 'RRRECTO', 'JMBORROMEO', 'EUGALERA', 
-        'JATERRADO', 'LMLABRADOR', 'SYSTEM'
-    ]
-    df = df[~df['Remark By'].isin(excluded_names)]
+    df['Date'] = pd.to_datetime(df['Date'])  # Ensure Date is in datetime format
+    excluded_names = ['FGPANGANIBAN', 'KPILUSTRISIMO', 'BLRUIZ', 'MMMEJIA', 'SAHERNANDEZ', 'GPRAMOS',
+                      'JGCELIZ', 'JRELEMINO', 'HVDIGNOS', 'RALOPE', 'DRTORRALBA', 'RRCARLIT', 'MEBEJER',
+                      'DASANTOS', 'SEMIJARES', 'GMCARIAN', 'RRRECTO', 'JMBORROMEO', 'EUGALERA', 
+                      'JATERRADO', 'LMLABRADOR', 'SYSTEM']
+    df = df[~df['Remark By'].isin(excluded_names)]  # Exclude rows with specified names
     return df
+
+# ------------------- FILE UPLOADER -------------------
+uploaded_file = st.sidebar.file_uploader("Upload Daily Remark File", type="xlsx")
 
 # ------------------- MAIN LOGIC -------------------
 if uploaded_file:
@@ -71,47 +68,50 @@ if uploaded_file:
 
     # ------------------- PRODUCTIVITY SUMMARY TABLE -------------------
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("\ud83d\udcca Productivity Summary Table")
-
-    def calculate_productivity_summary(df):
-        summary = df.groupby(df['Date'].dt.date).agg(
-            Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
-            Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False).sum()),
-            Total_RPC=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('RPC', na=False).sum()),
-            Total_PTP_Amount=('PTP Amount', 'sum'),
-            Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False)].sum())
-        ).reset_index()
-        total_row = summary.sum(numeric_only=True)
-        total_row['Date'] = 'Total'
-        summary = pd.concat([summary, total_row.to_frame().T], ignore_index=True)
-        return summary
-
-    st.dataframe(calculate_productivity_summary(df), width=1500)
+    st.subheader("Productivity Summary Table")
+    st.dataframe(df, width=1500)
     st.markdown('</div>', unsafe_allow_html=True)
 
     # ------------------- PRODUCTIVITY SUMMARY PER CYCLE -------------------
     st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader("\ud83d\udcc6 Productivity Summary per Cycle (Grouped by Date)")
+    st.subheader("Productivity Summary per Cycle (Grouped by Date)")
 
-    def extract_two_digit_cycle(value):
-        match = re.findall(r'\b\d{2}\b', str(value))
-        return match[0] if match else "NO IDENTIFIER OF CYCLE"
+    def extract_cycle_from_service_no(service_no):
+        match = re.search(r'\b\d{2}\b', str(service_no))
+        return match.group(0) if match else "NO IDENTIFIER OF CYCLE"
 
-    def calculate_productivity_per_cycle(df):
-        df['Service No.'] = df['Service No.'].astype(str)
-        df['Cycle'] = df['Service No.'].apply(extract_two_digit_cycle)
-        cycle_summary = df.groupby([df['Date'].dt.date, 'Cycle']).agg(
-            Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
-            Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False).sum()),
-            Total_RPC=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('RPC', na=False).sum()),
-            Total_PTP_Amount=('PTP Amount', 'sum'),
-            Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False)].sum())
-        ).reset_index()
-        total_row = cycle_summary.sum(numeric_only=True)
-        total_row['Date'] = 'Total'
-        total_row['Cycle'] = 'ALL CYCLES'
-        cycle_summary = pd.concat([cycle_summary, total_row.to_frame().T], ignore_index=True)
-        return cycle_summary
+    df['Cycle'] = df['Service No.'].astype(str).apply(extract_cycle_from_service_no)
+    cycle_summary = df.groupby([df['Date'].dt.date, 'Cycle']).agg(
+        Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
+        Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False).sum()),
+        Total_RPC=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('RPC', na=False).sum()),
+        Total_PTP_Amount=('PTP Amount', 'sum'),
+        Balance_Amount=('Balance', lambda x: df.loc[x.index, 'Balance'][df.loc[x.index, 'Status'].str.contains('PTP', na=False)].sum())
+    ).reset_index()
+    st.dataframe(cycle_summary, width=1500)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    st.dataframe(calculate_productivity_per_cycle(df), width=1500)
+    # ------------------- PRODUCTIVITY SUMMARY PER COLLECTOR -------------------
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.subheader("Productivity Summary per Collector")
+    
+    min_date, max_date = df['Date'].min().date(), df['Date'].max().date()
+    start_date, end_date = st.date_input(
+        "Select date range", 
+        [min_date, max_date], 
+        min_value=min_date, 
+        max_value=max_date
+    )
+
+    filtered_df = df[(df['Date'].dt.date >= start_date) & (df['Date'].dt.date <= end_date)]
+    filtered_df = filtered_df[~filtered_df['Remark By'].str.upper().isin(["SYSTEM"])]
+
+    collector_summary = filtered_df.groupby([filtered_df['Date'].dt.date, 'Remark By']).agg(
+        Total_Connected=('Account No.', lambda x: (filtered_df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
+        Total_PTP=('Account No.', lambda x: filtered_df.loc[x.index, 'Status'].str.contains('PTP', na=False).sum()),
+        Total_RPC=('Account No.', lambda x: filtered_df.loc[x.index, 'Status'].str.contains('RPC', na=False).sum()),
+        Total_PTP_Amount=('PTP Amount', 'sum'),
+        Balance_Amount=('Balance', lambda x: filtered_df.loc[x.index, 'Balance'][filtered_df.loc[x.index, 'Status'].str.contains('PTP', na=False)].sum())
+    ).reset_index()
+    st.dataframe(collector_summary, width=1500)
     st.markdown('</div>', unsafe_allow_html=True)
