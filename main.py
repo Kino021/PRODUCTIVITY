@@ -120,6 +120,9 @@ if uploaded_file is not None:
 
     filtered_df = df[(df['Date'].dt.date >= start_date) & (df['Date'].dt.date <= end_date)]
 
+    # Exclude "System" and "SYSTEM" from the summary
+    filtered_df = filtered_df[~filtered_df['Remark By'].str.upper().isin(["SYSTEM"])]
+
     collector_summary = filtered_df.groupby([filtered_df['Date'].dt.date, 'Remark By']).agg(
         Total_Connected=('Account No.', lambda x: (filtered_df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
         Total_PTP=('Account No.', lambda x: filtered_df.loc[x.index, 'Status'].str.contains('PTP', na=False).sum()),
