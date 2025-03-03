@@ -60,11 +60,11 @@ if uploaded_file is not None:
     st.write("## Productivity Summary Table")
     st.write(calculate_productivity_summary(df))
 
-    # --- Productivity Summary per Cycle (Grouped by Date) ---
+    # --- Productivity Summary per Cycle (Grouped by Date with Spacer) ---
     def calculate_productivity_per_cycle(df):
         df['Service No.'] = df['Service No.'].astype(str)
         df['Cycle'] = df['Service No.'].apply(lambda x: x if x.isnumeric() else "NO IDENTIFIER OF CYCLE")
-
+        
         cycle_summary = df.groupby([df['Date'].dt.date, 'Cycle']).agg(
             Total_Connected=('Account No.', lambda x: (df.loc[x.index, 'Call Status'] == 'CONNECTED').sum()),
             Total_PTP=('Account No.', lambda x: df.loc[x.index, 'Status'].str.contains('PTP', na=False).sum()),
@@ -78,11 +78,15 @@ if uploaded_file is not None:
         total_row['Date'] = 'Total'
         total_row['Cycle'] = 'Total'
         cycle_summary = pd.concat([cycle_summary, total_row.to_frame().T], ignore_index=True)
-
+        
         return cycle_summary
 
     st.write("## Productivity Summary per Cycle (Grouped by Date)")
-    st.write(calculate_productivity_per_cycle(df))
+    cycle_summary = calculate_productivity_per_cycle(df)
+    for date in cycle_summary['Date'].unique():
+        st.write(f"### Date: {date}")
+        st.write(cycle_summary[cycle_summary['Date'] == date])
+        st.markdown("---")  # Spacer for clarity
 
     # --- Productivity Summary per Collector ---
     st.write("## Productivity Summary per Collector")
