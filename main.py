@@ -96,18 +96,19 @@ collector_summary = pd.DataFrame(columns=[
 
 # Group by date and collector
 for (date, collector), collector_group in filtered_df.groupby([filtered_df['Date'].dt.date, 'Remark By']):
-    # Filter out rows with PTP Amount 0 for calculations
-    non_zero_ptp_group = collector_group[collector_group['PTP Amount'] != 0]
+    # Filter out rows with 'PTP FF' in Status and count rows with 'PTP'
+    ptp_group = collector_group[collector_group['Status'].str.contains('PTP', na=False) & 
+                               ~collector_group['Status'].str.contains('PTP FF', na=False)]
     
     total_connected = collector_group[collector_group['Call Status'] == 'CONNECTED']['Account No.'].count()
-    total_ptp = non_zero_ptp_group[non_zero_ptp_group['Status'].str.contains('PTP', na=False)]['Account No.'].nunique()
+    total_ptp = ptp_group['Account No.'].nunique()
     total_rpc = collector_group[collector_group['Status'].str.contains('RPC', na=False)]['Account No.'].nunique()
     
-    # Sum of PTP Amount for non-zero PTP rows
-    ptp_amount = non_zero_ptp_group[non_zero_ptp_group['Status'].str.contains('PTP', na=False)]['PTP Amount'].sum()
+    # Sum of PTP Amount where Status contains 'PTP' and exclude 'PTP FF'
+    ptp_amount = ptp_group['PTP Amount'].sum()
     
-    # Sum of Balance for non-zero PTP rows
-    balance_amount = non_zero_ptp_group[non_zero_ptp_group['Status'].str.contains('PTP', na=False)]['Balance'].sum()
+    # Sum of Balance where Status contains 'PTP' and exclude 'PTP FF' and PTP Amount is non-zero
+    balance_amount = ptp_group[ptp_group['PTP Amount'] != 0]['Balance'].sum()
 
     # Only include the row if there's a non-zero PTP amount
     if ptp_amount > 0:
