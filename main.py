@@ -46,7 +46,7 @@ st.markdown(
 )
 
 # HEADER
-st.markdown('<div class="header">🍩 Simpsons Productivity Dashboard</div>', unsafe_allow_html=True)
+st.markdown('<div class="header">🍩 Productivity Dashboard</div>', unsafe_allow_html=True)
 
 @st.cache_data
 def load_data(uploaded_file):
