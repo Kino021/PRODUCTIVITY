@@ -40,6 +40,9 @@ st.markdown('<div class="header">📊 PRODUCTIVITY DASHBOARD</div>', unsafe_allo
 def load_data(uploaded_file):
     df = pd.read_excel(uploaded_file)
     df['Date'] = pd.to_datetime(df['Date'])
+    df = df[~df['Remark By'].isin(['FGPANGANIBAN', 'KPILUSTRISIMO', 'BLRUIZ', 'MMMEJIA', 'SAHERNANDEZ', 'GPRAMOS',
+                                   'JGCELIZ', 'JRELEMINO', 'HVDIGNOS', 'RALOPE', 'DRTORRALBA', 'RRCARLIT', 'MEBEJER',
+                                   'DASANTOS', 'SEMIJARES', 'GMCARIAN', 'RRRECTO', 'JMBORROMEO', 'EUGALERA', 'JATERRADO', 'LMLABRADOR', 'EASORIANO'])]
     return df
 
 # ------------------- FILE UPLOADER -------------------
