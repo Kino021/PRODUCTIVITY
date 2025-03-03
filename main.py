@@ -11,12 +11,12 @@ st.markdown(
     <style>
     /* General Styling */
     body, .stApp {
-        background-color: white !important; /* Right side is white */
+        background-color: #F5F7FA !important; /* Light grey for better contrast */
         color: black !important;
         font-family: Arial, sans-serif;
     }
     .stSidebar {
-        background-color: black !important; /* Left sidebar is black */
+        background-color: black !important; /* Dark sidebar */
         padding: 20px;
     }
     .stSidebar .stFileUploader, .stSidebar div {
@@ -27,19 +27,31 @@ st.markdown(
     .header {
         text-align: center;
         padding: 20px;
-        background: linear-gradient(to right, #4A90E2, #007AFF);
+        background: linear-gradient(to right, #0052D4, #4364F7, #6FB1FC);
         color: white;
-        font-size: 24px;
-        border-radius: 10px;
+        font-size: 26px;
+        font-weight: bold;
+        border-radius: 12px;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
     }
     
     /* Card Layout */
     .card {
-        background-color: #f8f9fa;
-        border-radius: 10px;
+        background-color: white;
+        border-radius: 12px;
         padding: 20px;
-        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.15);
         margin-bottom: 20px;
+        transition: transform 0.2s;
+    }
+    .card:hover {
+        transform: scale(1.02);
+    }
+    
+    /* Table Styling */
+    .dataframe {
+        border-radius: 10px;
+        overflow: hidden;
     }
     </style>
     """,
