@@ -59,7 +59,7 @@ def load_data(uploaded_file):
         'FGPANGANIBAN', 'KPILUSTRISIMO', 'BLRUIZ', 'MMMEJIA', 'SAHERNANDEZ', 'GPRAMOS',
         'JGCELIZ', 'JRELEMINO', 'HVDIGNOS', 'RALOPE', 'DRTORRALBA', 'RRCARLIT', 'MEBEJER',
         'DASANTOS', 'SEMIJARES', 'GMCARIAN', 'RRRECTO', 'JMBORROMEO', 'EUGALERA', 
-        'JATERRADO', 'LMLABRADOR', 'EASORIANO'
+        'JATERRADO', 'LMLABRADOR', 'SYSTEM'
     ]
     
     df = df[~df['Remark By'].isin(excluded_names)]  # Exclude rows with specified names
