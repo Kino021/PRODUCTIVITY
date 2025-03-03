@@ -4,27 +4,54 @@ import pandas as pd
 # Page configuration
 st.set_page_config(layout="wide", page_title="PRODUCTIVITY", page_icon="📊", initial_sidebar_state="expanded")
 
-# Apply black background for the sidebar and white for the main content
+# Apply global styling
 st.markdown(
     """
     <style>
+    /* General Styling */
     body, .stApp {
         background-color: white !important; /* Right side is white */
         color: black !important;
+        font-family: Arial, sans-serif;
     }
     .stSidebar {
         background-color: black !important; /* Left sidebar is black */
+        padding: 20px;
     }
-    .stSidebar .stFileUploader {
+    .stSidebar .stFileUploader, .stSidebar div {
         color: white !important;
     }
-    .block-container {
-        padding-top: 0 !important;
+    
+    /* Header Design */
+    .header {
+        text-align: center;
+        padding: 20px;
+        background: linear-gradient(to right, #4A90E2, #007AFF);
+        color: white;
+        font-size: 24px;
+        border-radius: 10px;
+    }
+    
+    /* Card Layout */
+    .card {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+
+    /* Center Elements */
+    .center {
+        text-align: center;
     }
     </style>
     """,
     unsafe_allow_html=True
 )
+
+# HEADER
+st.markdown('<div class="header">📊 PRODUCTIVITY DASHBOARD</div>', unsafe_allow_html=True)
 
 @st.cache_data
 def load_data(uploaded_file):
@@ -38,7 +65,7 @@ def load_data(uploaded_file):
     df['Date'] = pd.to_datetime(df['Date'])  # Ensure Date is in datetime format
     return df
 
-uploaded_file = st.sidebar.file_uploader("Upload Daily Remark File", type="xlsx")
+uploaded_file = st.sidebar.file_uploader("📂 Upload Daily Remark File", type="xlsx")
 
 if uploaded_file is not None:
     df = load_data(uploaded_file)
@@ -47,7 +74,8 @@ if uploaded_file is not None:
     df = df[~df['Remark By'].str.contains('SYSTEM', case=False, na=False)]
 
     # --- Productivity Summary per Cycle (Grouped by Date in Two Columns) ---
-    st.write("## Productivity Summary per Cycle (Grouped by Date)")
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.write("## 📆 Productivity Summary per Cycle (Grouped by Date)")
     
     def calculate_productivity_per_cycle(df):
         df['Service No.'] = df['Service No.'].astype(str)
@@ -69,19 +97,25 @@ if uploaded_file is not None:
     for i in range(0, len(unique_dates), 2):
         cols = st.columns(2)
         with cols[0]:
-            st.write(f"### Date: {unique_dates[i]}")
+            st.markdown(f'<div class="card">', unsafe_allow_html=True)
+            st.write(f"### 📅 Date: {unique_dates[i]}")
             st.dataframe(cycle_summary[cycle_summary['Date'] == unique_dates[i]], width=700)
+            st.markdown('</div>', unsafe_allow_html=True)
         if i + 1 < len(unique_dates):
             with cols[1]:
-                st.write(f"### Date: {unique_dates[i + 1]}")
+                st.markdown(f'<div class="card">', unsafe_allow_html=True)
+                st.write(f"### 📅 Date: {unique_dates[i + 1]}")
                 st.dataframe(cycle_summary[cycle_summary['Date'] == unique_dates[i + 1]], width=700)
+                st.markdown('</div>', unsafe_allow_html=True)
         st.markdown("---")  # Spacer for clarity
+    st.markdown('</div>', unsafe_allow_html=True)
 
     # --- Productivity Summary per Collector ---
-    st.write("## Productivity Summary per Collector")
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.write("## 👤 Productivity Summary per Collector")
 
     min_date, max_date = df['Date'].min().date(), df['Date'].max().date()
-    start_date, end_date = st.date_input("Select date range", [min_date, max_date], min_value=min_date, max_value=max_date)
+    start_date, end_date = st.date_input("📅 Select date range", [min_date, max_date], min_value=min_date, max_value=max_date)
 
     filtered_df = df[(df['Date'].dt.date >= start_date) & (df['Date'].dt.date <= end_date)]
 
@@ -100,3 +134,4 @@ if uploaded_file is not None:
     collector_summary = pd.concat([collector_summary, total_row.to_frame().T], ignore_index=True)
 
     st.dataframe(collector_summary, width=1500)
+    st.markdown('</div>', unsafe_allow_html=True)
