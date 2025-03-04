@@ -48,65 +48,90 @@ uploaded_file = st.file_uploader("Upload your data file", type=["xlsx"])
 def load_data(uploaded_file):
     df = pd.read_excel(uploaded_file)
     df['Date'] = pd.to_datetime(df['Date'])
-    df['Time'] = pd.to_datetime(df['Time']).dt.hour  # Extract only the hour for time-based summaries
-    df = df[~df['Remark By'].isin([
-        'FGPANGANIBAN', 'KPILUSTRISIMO', 'BLRUIZ', 'MMMEJIA', 'SAHERNANDEZ', 'GPRAMOS',
-        'JGCELIZ', 'JRELEMINO', 'HVDIGNOS', 'RALOPE', 'DRTORRALBA', 'RRCARLIT', 'MEBEJER',
-        'DASANTOS', 'SEMIJARES', 'GMCARIAN', 'RRRECTO', 'JMBORROMEO', 'EUGALERA', 'JATERRADO', 
-        'LMLABRADOR', 'EASORIANO'
-    ])]  # Exclude specific users
+    df = df[~df['Remark By'].isin(['FGPANGANIBAN', 'KPILUSTRISIMO', 'BLRUIZ', 'MMMEJIA', 'SAHERNANDEZ', 'GPRAMOS',
+                                   'JGCELIZ', 'JRELEMINO', 'HVDIGNOS', 'RALOPE', 'DRTORRALBA', 'RRCARLIT', 'MEBEJER',
+                                   'DASANTOS', 'SEMIJARES', 'GMCARIAN', 'RRRECTO', 'JMBORROMEO', 'EUGALERA', 'JATERRADO', 
+                                   'LMLABRADOR', 'EASORIANO'])]  # Exclude specific users
     return df
 
 # ------------------- FUNCTION TO GENERATE COLLECTOR SUMMARY -------------------
 def generate_collector_summary(df):
-    collector_summary = df.groupby(['Date', 'Remark By']).agg(
-        Total_Connected=('Account No.', lambda x: (df['Call Status'] == 'CONNECTED').sum()),
-        Total_PTP=('Account No.', lambda x: (df['Status'].str.contains('PTP', na=False) & (df['PTP Amount'] != 0)).sum()),
-        Total_RPC=('Account No.', lambda x: (df['Status'].str.contains('RPC', na=False)).sum()),
-        PTP_Amount=('PTP Amount', 'sum'),
-        Balance_Amount=('Balance', 'sum')
-    ).reset_index()
+    collector_summary = pd.DataFrame(columns=[
+        'Date', 'Collector', 'Total Connected', 'Total PTP', 'Total RPC', 'PTP Amount', 'Balance Amount'
+    ])
+    
+    df = df[df['Status'] != 'PTP FF UP']  # Exclude certain statuses
 
-    return collector_summary.rename(columns={"Remark By": "Collector"})
+    for (date, collector), collector_group in df[~df['Remark By'].str.upper().isin(['SYSTEM'])].groupby([df['Date'].dt.date, 'Remark By']):
+        total_connected = collector_group[collector_group['Call Status'] == 'CONNECTED']['Account No.'].count()
+        total_ptp = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['PTP Amount'] != 0)]['Account No.'].nunique()
+        total_rpc = collector_group[collector_group['Status'].str.contains('RPC', na=False)]['Account No.'].count()
+        ptp_amount = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['PTP Amount'] != 0)]['PTP Amount'].sum()
+        balance_amount = collector_group[
+            (collector_group['Status'].str.contains('PTP', na=False)) & 
+            (collector_group['PTP Amount'] != 0) & 
+            (collector_group['Balance'] != 0)
+        ]['Balance'].sum()
+
+        collector_summary = pd.concat([collector_summary, pd.DataFrame([{
+            'Date': date,
+            'Collector': collector,
+            'Total Connected': total_connected,
+            'Total PTP': total_ptp,
+            'Total RPC': total_rpc,
+            'PTP Amount': ptp_amount,
+            'Balance Amount': balance_amount,
+        }])], ignore_index=True)
+
+    return collector_summary
 
 # ------------------- FUNCTION TO GENERATE CYCLE SUMMARY -------------------
 def generate_cycle_summary(df):
-    cycle_summary = df.groupby(['Date', 'Service No.']).agg(
-        Total_Connected=('Account No.', lambda x: (df['Call Status'] == 'CONNECTED').sum()),
-        Total_PTP=('Account No.', lambda x: (df['Status'].str.contains('PTP', na=False) & (df['PTP Amount'] != 0)).sum()),
-        Total_RPC=('Account No.', lambda x: (df['Status'].str.contains('RPC', na=False)).sum()),
-        PTP_Amount=('PTP Amount', 'sum'),
-        Balance_Amount=('Balance', 'sum')
-    ).reset_index()
+    cycle_summary_by_date = {}
 
-    return cycle_summary.rename(columns={"Service No.": "Cycle"})
+    df = df[df['Status'] != 'PTP FF UP']
 
-# ------------------- FUNCTION TO GENERATE HOURLY PTP SUMMARY -------------------
-def generate_hourly_ptp_summary(df):
-    hourly_summary = df[df['Status'].str.contains('PTP', na=False) & (df['PTP Amount'] != 0)]
-    
-    hourly_ptp_summary = hourly_summary.groupby(['Date', 'Time']).agg(
-        Total_PTP=('Account No.', 'nunique'),
-        PTP_Amount=('PTP Amount', 'sum')
-    ).reset_index()
+    for (date, cycle), cycle_group in df[~df['Remark By'].str.upper().isin(['SYSTEM'])].groupby([df['Date'].dt.date, 'Service No.']):
+        total_connected = cycle_group[cycle_group['Call Status'] == 'CONNECTED']['Account No.'].count()
+        total_ptp = cycle_group[cycle_group['Status'].str.contains('PTP', na=False) & (cycle_group['PTP Amount'] != 0)]['Account No.'].nunique()
+        total_rpc = cycle_group[cycle_group['Status'].str.contains('RPC', na=False)]['Account No.'].count()
+        ptp_amount = cycle_group[cycle_group['Status'].str.contains('PTP', na=False) & (cycle_group['PTP Amount'] != 0)]['PTP Amount'].sum()
+        balance_amount = cycle_group[
+            (cycle_group['Status'].str.contains('PTP', na=False)) & 
+            (cycle_group['PTP Amount'] != 0) & 
+            (cycle_group['Balance'] != 0)
+        ]['Balance'].sum()
 
-    return hourly_ptp_summary
+        cycle_summary = pd.DataFrame([{
+            'Date': date,
+            'Cycle': cycle,
+            'Total Connected': total_connected,
+            'Total PTP': total_ptp,
+            'Total RPC': total_rpc,
+            'PTP Amount': ptp_amount,
+            'Balance Amount': balance_amount,
+        }])
 
-# ------------------- DISPLAY DATA IF FILE IS UPLOADED -------------------
+        if date in cycle_summary_by_date:
+            cycle_summary_by_date[date] = pd.concat([cycle_summary_by_date[date], cycle_summary], ignore_index=True)
+        else:
+            cycle_summary_by_date[date] = cycle_summary
+
+    return cycle_summary_by_date
+
+# ------------------- MAIN APP LOGIC -------------------
 if uploaded_file is not None:
     df = load_data(uploaded_file)
-
-    # --- Collector Summary ---
+    
+    # Display the title for Collector Summary
     st.markdown('<div class="category-title">📋 PRODUCTIVITY BY COLLECTOR</div>', unsafe_allow_html=True)
     collector_summary = generate_collector_summary(df)
-    st.write(collector_summary)
+    st.dataframe(collector_summary)
 
-    # --- Cycle Summary ---
-    st.markdown('<div class="category-title">📋 PRODUCTIVITY BY CYCLE</div>', unsafe_allow_html=True)
-    cycle_summary = generate_cycle_summary(df)
-    st.write(cycle_summary)
+    # Display the title for Cycle Summary
+    st.markdown('<div class="category-title">📋 PRODUCTIVITY BY CYCLE (Separated per Date)</div>', unsafe_allow_html=True)
+    cycle_summary_by_date = generate_cycle_summary(df)
 
-    # --- Hourly PTP Summary ---
-    st.markdown('<div class="category-title">⏳ HOURLY PTP SUMMARY</div>', unsafe_allow_html=True)
-    hourly_ptp_summary = generate_hourly_ptp_summary(df)
-    st.write(hourly_ptp_summary)
+    for date, summary in cycle_summary_by_date.items():
+        st.markdown(f'**Date: {date}**')
+        st.dataframe(summary)
