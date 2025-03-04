@@ -185,9 +185,6 @@ def generate_time_summary(df):
     
     return time_summary_by_date
 
-# ------------------- FILE UPLOAD -------------------
-uploaded_file = st.file_uploader("Upload CSV or Excel File", type=["csv", "xlsx"])
-
 if uploaded_file is not None:
     if uploaded_file.name.endswith(".csv"):
         df = pd.read_csv(uploaded_file)
