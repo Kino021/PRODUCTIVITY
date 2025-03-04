@@ -34,6 +34,10 @@ st.markdown("""
             box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
         }
+        .total-row {
+            font-weight: bold;
+            background-color: #ffdd57;
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -57,6 +61,12 @@ def load_data(uploaded_file):
     ])]  # Exclude specific users
     return df
 
+# ------------------- FUNCTION TO ADD TOTAL ROW -------------------
+def add_total_row(df, groupby_column):
+    total_row = pd.DataFrame(df.sum(numeric_only=True)).T  # Sum all numeric columns
+    total_row[groupby_column] = "TOTAL"
+    return pd.concat([df, total_row], ignore_index=True)
+
 # ------------------- FUNCTION TO GENERATE COLLECTOR SUMMARY -------------------
 def generate_collector_summary(df):
     collector_summary = df.groupby(['Date', 'Remark By']).agg(
@@ -67,7 +77,8 @@ def generate_collector_summary(df):
         Balance_Amount=('Balance', 'sum')
     ).reset_index()
 
-    return collector_summary.rename(columns={"Remark By": "Collector"})
+    collector_summary = collector_summary.rename(columns={"Remark By": "Collector"})
+    return add_total_row(collector_summary, "Collector")
 
 # ------------------- FUNCTION TO GENERATE CYCLE SUMMARY -------------------
 def generate_cycle_summary(df):
@@ -79,7 +90,8 @@ def generate_cycle_summary(df):
         Balance_Amount=('Balance', 'sum')
     ).reset_index()
 
-    return cycle_summary.rename(columns={"Service No.": "Cycle"})
+    cycle_summary = cycle_summary.rename(columns={"Service No.": "Cycle"})
+    return add_total_row(cycle_summary, "Cycle")
 
 # ------------------- FUNCTION TO GENERATE HOURLY PTP SUMMARY -------------------
 def generate_hourly_ptp_summary(df):
@@ -90,7 +102,7 @@ def generate_hourly_ptp_summary(df):
         PTP_Amount=('PTP Amount', 'sum')
     ).reset_index()
 
-    return hourly_ptp_summary
+    return add_total_row(hourly_ptp_summary, "Time")
 
 # ------------------- DISPLAY DATA IF FILE IS UPLOADED -------------------
 if uploaded_file is not None:
@@ -99,14 +111,14 @@ if uploaded_file is not None:
     # --- Collector Summary ---
     st.markdown('<div class="category-title">📋 PRODUCTIVITY BY COLLECTOR</div>', unsafe_allow_html=True)
     collector_summary = generate_collector_summary(df)
-    st.write(collector_summary)
+    st.write(collector_summary.style.applymap(lambda x: 'background-color: #ffdd57' if x == "TOTAL" else ''))
 
     # --- Cycle Summary ---
     st.markdown('<div class="category-title">📋 PRODUCTIVITY BY CYCLE</div>', unsafe_allow_html=True)
     cycle_summary = generate_cycle_summary(df)
-    st.write(cycle_summary)
+    st.write(cycle_summary.style.applymap(lambda x: 'background-color: #ffdd57' if x == "TOTAL" else ''))
 
     # --- Hourly PTP Summary ---
     st.markdown('<div class="category-title">⏳ HOURLY PTP SUMMARY</div>', unsafe_allow_html=True)
     hourly_ptp_summary = generate_hourly_ptp_summary(df)
-    st.write(hourly_ptp_summary)
+    st.write(hourly_ptp_summary.style.applymap(lambda x: 'background-color: #ffdd57' if x == "TOTAL" else ''))
