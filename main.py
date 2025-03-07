@@ -79,13 +79,13 @@ if uploaded_file is not None:
     with col2:
         st.write("## Summary Table by Cycle")
 
-        # Initialize an empty DataFrame for the summary table by service number (cycle)
+        # Initialize an empty DataFrame for the summary table by cycle
         cycle_summary = pd.DataFrame(columns=[
-            'Day', 'Service No.', 'Total Connected', 'Total PTP', 'Total RPC', 'PTP Amount', 'Balance Amount'
+            'Day', 'Cycle', 'Total Connected', 'Total PTP', 'Total RPC', 'PTP Amount', 'Balance Amount'
         ])
 
-        # Group by 'Date' and 'Service No.'
-        for (date, service_no), cycle_group in filtered_df.groupby([filtered_df['Date'].dt.date, 'Service No.']):
+        # Group by 'Date' and 'Service No.' (now referred to as "Cycle")
+        for (date, cycle), cycle_group in filtered_df.groupby([filtered_df['Date'].dt.date, 'Service No.']):
             # Calculate the metrics
             total_connected = cycle_group[cycle_group['Call Status'] == 'CONNECTED']['Account No.'].count()
             total_ptp = cycle_group[cycle_group['Status'].str.contains('PTP', na=False) & (cycle_group['PTP Amount'] != 0)]['Account No.'].nunique()
@@ -96,7 +96,7 @@ if uploaded_file is not None:
             # Add the row to the summary
             cycle_summary = pd.concat([cycle_summary, pd.DataFrame([{
                 'Day': date,
-                'Service No.': service_no,
+                'Cycle': cycle,
                 'Total Connected': total_connected,
                 'Total PTP': total_ptp,
                 'Total RPC': total_rpc,
