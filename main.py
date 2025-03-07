@@ -42,12 +42,21 @@ if uploaded_file is not None:
     with col1:
         st.write("## Summary Table by Collector per Day")
 
-        # Add date filter
+        # Add date filter for Collector Table
         min_date = df['Date'].min().date()
         max_date = df['Date'].max().date()
-        start_date, end_date = st.date_input("Select date range", [min_date, max_date], min_value=min_date, max_value=max_date)
+        
+        try:
+            # Add date range selection for Collector table
+            start_date, end_date = st.date_input("Select date range for Collector", [min_date, max_date], min_value=min_date, max_value=max_date)
+        except ValueError:
+            start_date, end_date = None, None
 
-        filtered_df = df[(df['Date'].dt.date >= start_date) & (df['Date'].dt.date <= end_date)]
+        # Filter data based on the selected date range or show all if no date range is selected
+        if start_date and end_date:
+            filtered_df = df[(df['Date'].dt.date >= start_date) & (df['Date'].dt.date <= end_date)]
+        else:
+            filtered_df = df  # If no date range is selected, show all data
 
         # Initialize an empty DataFrame for the summary table by collector
         collector_summary = pd.DataFrame(columns=[
@@ -79,14 +88,14 @@ if uploaded_file is not None:
     with col2:
         st.write("## Summary Table by Cycle")
 
-        # Add date filter for the second table (by Cycle)
+        # Add date filter for Cycle Table
         try:
-            # Add a date range selection with default values set to blank if no data
+            # Add a date range selection for Cycle table
             start_date_cycle, end_date_cycle = st.date_input("Select date range for Cycle", [min_date, max_date], min_value=min_date, max_value=max_date)
         except ValueError:
             start_date_cycle, end_date_cycle = None, None
 
-        # Only filter if both start and end dates are set
+        # Filter data based on the selected date range or show all if no date range is selected
         if start_date_cycle and end_date_cycle:
             filtered_cycle_df = df[(df['Date'].dt.date >= start_date_cycle) & (df['Date'].dt.date <= end_date_cycle)]
         else:
