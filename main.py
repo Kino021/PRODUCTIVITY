@@ -35,7 +35,6 @@ uploaded_file = st.sidebar.file_uploader("Upload Daily Remark File", type="xlsx"
 
 if uploaded_file is not None:
     df = load_data(uploaded_file)
-    st.write(df)
     
     # Create columns for layout
     col1, col2 = st.columns(2)
