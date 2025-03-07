@@ -80,9 +80,17 @@ if uploaded_file is not None:
         st.write("## Summary Table by Cycle")
 
         # Add date filter for the second table (by Cycle)
-        start_date_cycle, end_date_cycle = st.date_input("Select date range for Cycle", [min_date, max_date], min_value=min_date, max_value=max_date)
+        try:
+            # Add a date range selection with default values set to blank if no data
+            start_date_cycle, end_date_cycle = st.date_input("Select date range for Cycle", [min_date, max_date], min_value=min_date, max_value=max_date)
+        except ValueError:
+            start_date_cycle, end_date_cycle = None, None
 
-        filtered_cycle_df = df[(df['Date'].dt.date >= start_date_cycle) & (df['Date'].dt.date <= end_date_cycle)]
+        # Only filter if both start and end dates are set
+        if start_date_cycle and end_date_cycle:
+            filtered_cycle_df = df[(df['Date'].dt.date >= start_date_cycle) & (df['Date'].dt.date <= end_date_cycle)]
+        else:
+            filtered_cycle_df = df  # If no date range is selected, show all data
 
         # Initialize an empty DataFrame for the summary table by cycle
         cycle_summary = pd.DataFrame(columns=[
