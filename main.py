@@ -49,7 +49,7 @@ if uploaded_file is not None:
 
         filtered_df = df[(df['Date'].dt.date >= start_date) & (df['Date'].dt.date <= end_date)]
 
-        # Initialize an empty DataFrame for the summary table
+        # Initialize an empty DataFrame for the summary table by collector
         collector_summary = pd.DataFrame(columns=[
             'Day', 'Collector', 'Total Connected', 'Total PTP', 'Total RPC', 'PTP Amount', 'Balance Amount'
         ])
@@ -75,3 +75,33 @@ if uploaded_file is not None:
             }])], ignore_index=True)
 
         st.write(collector_summary)
+
+    with col2:
+        st.write("## Summary Table by Cycle")
+
+        # Initialize an empty DataFrame for the summary table by service number (cycle)
+        cycle_summary = pd.DataFrame(columns=[
+            'Day', 'Service No.', 'Total Connected', 'Total PTP', 'Total RPC', 'PTP Amount', 'Balance Amount'
+        ])
+
+        # Group by 'Date' and 'Service No.'
+        for (date, service_no), cycle_group in filtered_df.groupby([filtered_df['Date'].dt.date, 'Service No.']):
+            # Calculate the metrics
+            total_connected = cycle_group[cycle_group['Call Status'] == 'CONNECTED']['Account No.'].count()
+            total_ptp = cycle_group[cycle_group['Status'].str.contains('PTP', na=False) & (cycle_group['PTP Amount'] != 0)]['Account No.'].nunique()
+            total_rpc = cycle_group[cycle_group['Status'].str.contains('RPC', na=False)]['Account No.'].nunique()
+            ptp_amount = cycle_group[cycle_group['Status'].str.contains('PTP', na=False) & (cycle_group['PTP Amount'] != 0)]['PTP Amount'].sum()
+            balance_amount = cycle_group[cycle_group['Status'].str.contains('PTP', na=False) & (cycle_group['Balance'] != 0)]['Balance'].sum()
+
+            # Add the row to the summary
+            cycle_summary = pd.concat([cycle_summary, pd.DataFrame([{
+                'Day': date,
+                'Service No.': service_no,
+                'Total Connected': total_connected,
+                'Total PTP': total_ptp,
+                'Total RPC': total_rpc,
+                'PTP Amount': ptp_amount,
+                'Balance Amount': balance_amount,
+            }])], ignore_index=True)
+
+        st.write(cycle_summary)
