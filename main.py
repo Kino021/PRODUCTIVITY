@@ -96,7 +96,7 @@ if uploaded_file is not None:
             # Add the row to the summary
             cycle_summary = pd.concat([cycle_summary, pd.DataFrame([{
                 'Day': date,
-                'Service No.': service_no,
+                'Service No.': Cycle,
                 'Total Connected': total_connected,
                 'Total PTP': total_ptp,
                 'Total RPC': total_rpc,
