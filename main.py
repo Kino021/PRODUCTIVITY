@@ -1,5 +1,5 @@
-import pandas as pd
 import streamlit as st
+import pandas as pd
 
 # Set up the page configuration
 st.set_page_config(layout="wide", page_title="PRODUCTIVITY", page_icon="📊", initial_sidebar_state="expanded")
@@ -20,16 +20,26 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Sample data loading function (replace with your actual data loading logic)
+st.title('Daily Remark Summary')
+
 @st.cache_data
 def load_data(uploaded_file):
     df = pd.read_excel(uploaded_file)
+    
+    # Filter out specific users based on 'Remark By'
+    exclude_users = ['FGPANGANIBAN', 'KPILUSTRISIMO', 'BLRUIZ', 'MMMEJIA', 'SAHERNANDEZ', 'GPRAMOS',
+                     'JGCELIZ', 'JRELEMINO', 'HVDIGNOS', 'SPMADRID', 'DRTORRALBA', 'RRCARLIT', 'MEBEJER',
+                     'DASANTOS', 'SEMIJARES', 'GMCARIAN', 'RRRECTO', 'EASORIANO', 'EUGALERA','JATERRADO','LMLABRADOR']
+    # Exclude rows where the 'Remark By' column contains any of the above users
+    df = df[~df['Remark By'].isin(exclude_users)]
+    
     return df
 
 # File uploader for Excel file
 uploaded_file = st.sidebar.file_uploader("Upload Daily Remark File", type="xlsx")
 
 if uploaded_file is not None:
+    # Load the data from the uploaded file
     df = load_data(uploaded_file)
 
     # Ensure 'Time' column is in datetime format
