@@ -74,6 +74,19 @@ if uploaded_file is not None:
                 'Balance Amount': balance_amount,
             }])], ignore_index=True)
 
+        # Calculate and append totals for the collector summary
+        total_row = pd.DataFrame([{
+            'Day': 'Total',
+            'Collector': '',
+            'Total Connected': collector_summary['Total Connected'].sum(),
+            'Total PTP': collector_summary['Total PTP'].sum(),
+            'Total RPC': collector_summary['Total RPC'].sum(),
+            'PTP Amount': collector_summary['PTP Amount'].sum(),
+            'Balance Amount': collector_summary['Balance Amount'].sum(),
+        }])
+
+        collector_summary = pd.concat([collector_summary, total_row], ignore_index=True)
+
         st.write(collector_summary)
 
     with col2:
@@ -108,5 +121,18 @@ if uploaded_file is not None:
                 'PTP Amount': ptp_amount,
                 'Balance Amount': balance_amount,
             }])], ignore_index=True)
+
+        # Calculate and append totals for the cycle summary
+        total_row_cycle = pd.DataFrame([{
+            'Day': 'Total',
+            'Cycle': '',
+            'Total Connected': cycle_summary['Total Connected'].sum(),
+            'Total PTP': cycle_summary['Total PTP'].sum(),
+            'Total RPC': cycle_summary['Total RPC'].sum(),
+            'PTP Amount': cycle_summary['PTP Amount'].sum(),
+            'Balance Amount': cycle_summary['Balance Amount'].sum(),
+        }])
+
+        cycle_summary = pd.concat([cycle_summary, total_row_cycle], ignore_index=True)
 
         st.write(cycle_summary)
