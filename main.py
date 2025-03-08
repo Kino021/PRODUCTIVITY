@@ -20,7 +20,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Sample data loading function (you can replace it with your actual data loading logic)
+# Sample data loading function (replace with your actual data loading logic)
 @st.cache_data
 def load_data(uploaded_file):
     df = pd.read_excel(uploaded_file)
@@ -77,42 +77,46 @@ if uploaded_file is not None:
         # Apply categorization based on the existing "Time" column
         df['Time Interval'] = df['Time'].apply(categorize_time_interval)
 
-        # Initialize an empty DataFrame for the summary table by cycle and time interval
-        cycle_time_summary = pd.DataFrame(columns=[
-            'Cycle', 'Time Interval', 'Total Connected', 'Total PTP', 'Total RPC', 'PTP Amount', 'Balance Amount'
-        ])
+        # Group the data by Cycle (Service No.) and generate separate tables
+        for cycle, cycle_group in df.groupby('Service No.'):
+            st.write(f"### Summary Table for Cycle: {cycle}")
 
-        # Group by 'Cycle' and 'Time Interval'
-        for (cycle, time_interval), cycle_time_group in df.groupby(['Service No.', 'Time Interval']):
-            # Calculate the metrics
-            total_connected = cycle_time_group[cycle_time_group['Call Status'] == 'CONNECTED']['Account No.'].count()
-            total_ptp = cycle_time_group[cycle_time_group['Status'].str.contains('PTP', na=False) & (cycle_time_group['PTP Amount'] != 0)]['Account No.'].nunique()
-            total_rpc = cycle_time_group[cycle_time_group['Status'].str.contains('RPC', na=False)]['Account No.'].nunique()
-            ptp_amount = cycle_time_group[cycle_time_group['Status'].str.contains('PTP', na=False) & (cycle_time_group['PTP Amount'] != 0)]['PTP Amount'].sum()
-            balance_amount = cycle_time_group[cycle_time_group['Status'].str.contains('PTP', na=False) & (cycle_time_group['Balance'] != 0)]['Balance'].sum()
+            # Initialize an empty DataFrame for the summary table by time interval
+            cycle_time_summary = pd.DataFrame(columns=[
+                'Cycle', 'Time Interval', 'Total Connected', 'Total PTP', 'Total RPC', 'PTP Amount', 'Balance Amount'
+            ])
 
-            # Add the row to the summary
-            cycle_time_summary = pd.concat([cycle_time_summary, pd.DataFrame([{
+            # Group by Time Interval within the current cycle
+            for time_interval, time_interval_group in cycle_group.groupby('Time Interval'):
+                # Calculate the metrics for the current time interval and cycle
+                total_connected = time_interval_group[time_interval_group['Call Status'] == 'CONNECTED']['Account No.'].count()
+                total_ptp = time_interval_group[time_interval_group['Status'].str.contains('PTP', na=False) & (time_interval_group['PTP Amount'] != 0)]['Account No.'].nunique()
+                total_rpc = time_interval_group[time_interval_group['Status'].str.contains('RPC', na=False)]['Account No.'].nunique()
+                ptp_amount = time_interval_group[time_interval_group['Status'].str.contains('PTP', na=False) & (time_interval_group['PTP Amount'] != 0)]['PTP Amount'].sum()
+                balance_amount = time_interval_group[time_interval_group['Status'].str.contains('PTP', na=False) & (time_interval_group['Balance'] != 0)]['Balance'].sum()
+
+                # Add the row to the summary
+                cycle_time_summary = pd.concat([cycle_time_summary, pd.DataFrame([{
+                    'Cycle': cycle,
+                    'Time Interval': time_interval,
+                    'Total Connected': total_connected,
+                    'Total PTP': total_ptp,
+                    'Total RPC': total_rpc,
+                    'PTP Amount': ptp_amount,
+                    'Balance Amount': balance_amount,
+                }])], ignore_index=True)
+
+            # Add totals row at the bottom for cycle-based summary
+            totals_row_cycle = {
                 'Cycle': cycle,
-                'Time Interval': time_interval,
-                'Total Connected': total_connected,
-                'Total PTP': total_ptp,
-                'Total RPC': total_rpc,
-                'PTP Amount': ptp_amount,
-                'Balance Amount': balance_amount,
-            }])], ignore_index=True)
+                'Time Interval': 'Total',
+                'Total Connected': cycle_time_summary['Total Connected'].sum(),
+                'Total PTP': cycle_time_summary['Total PTP'].sum(),
+                'Total RPC': cycle_time_summary['Total RPC'].sum(),
+                'PTP Amount': cycle_time_summary['PTP Amount'].sum(),
+                'Balance Amount': cycle_time_summary['Balance Amount'].sum(),
+            }
+            cycle_time_summary = pd.concat([cycle_time_summary, pd.DataFrame([totals_row_cycle])], ignore_index=True)
 
-        # Add totals row at the bottom for cycle-based summary
-        totals_row_cycle = {
-            'Cycle': 'Total',
-            'Time Interval': '',
-            'Total Connected': cycle_time_summary['Total Connected'].sum(),
-            'Total PTP': cycle_time_summary['Total PTP'].sum(),
-            'Total RPC': cycle_time_summary['Total RPC'].sum(),
-            'PTP Amount': cycle_time_summary['PTP Amount'].sum(),
-            'Balance Amount': cycle_time_summary['Balance Amount'].sum(),
-        }
-        cycle_time_summary = pd.concat([cycle_time_summary, pd.DataFrame([totals_row_cycle])], ignore_index=True)
-
-        # Display the cycle and time interval summary table
-        st.write(cycle_time_summary)
+            # Display the cycle-based summary table
+            st.write(cycle_time_summary)
