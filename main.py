@@ -176,7 +176,7 @@ if uploaded_file is not None:
             cycle_time_summary['Time Interval'], categories=time_interval_sort_order.keys(), ordered=True)
         cycle_time_summary = cycle_time_summary.sort_values('Time Interval')
 
-        # Add totals row for cycle-based summary
+        # Add total row for cycle-based summary
         totals_row_cycle = {
             'Cycle': 'Total',
             'Time Interval': 'Total',
