@@ -39,9 +39,9 @@ if uploaded_file is not None:
     df['Time'] = pd.to_datetime(df['Time'], errors='coerce').dt.time
 
     # Filter out specific users based on 'Remark By'
-    exclude_users = ['FGPANGANIBAN', 'KPILUSTRISIMO', 'BLRUIZ', 'MMMEJIA', 'SAHERNANDEZ', 'GPRAMOS',
-                     'JGCELIZ', 'SPMADRID', 'RRCARLIT', 'MEBEJER',
-                     'SEMIJARES', 'GMCARIAN', 'RRRECTO', 'EASORIANO', 'EUGALERA','JATERRADO','LMLABRADOR']
+    exclude_users = ['FGPANGANIBAN', 'KPILUSTRISIMO', 'BLRUIZ', 'MMMEJIA',
+                     'JGCELIZ', 'SPMADRID', 'RRCARLIT']
+                     
     df = df[~df['Remark By'].isin(exclude_users)]
 
     # Create the columns layout
