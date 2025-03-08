@@ -40,9 +40,8 @@ if uploaded_file is not None:
 
     # Filter out specific users based on 'Remark By'
     exclude_users = ['FGPANGANIBAN', 'KPILUSTRISIMO', 'BLRUIZ', 'MMMEJIA', 'SAHERNANDEZ', 'GPRAMOS',
-                     'JGCELIZ', 'SPMADRID', 'RRCARLIT', 'MEBEJER',
-                     'DASANTOS', 'SEMIJARES', 'GMCARIAN', 'RRRECTO', 'EASORIANO']
-                     
+                     'JGCELIZ', 'JRELEMINO', 'HVDIGNOS', 'SPMADRID', 'DRTORRALBA', 'RRCARLIT', 'MEBEJER',
+                     'DASANTOS', 'SEMIJARES', 'GMCARIAN', 'RRRECTO', 'EASORIANO', 'EUGALERA','JATERRADO','LMLABRADOR']
     df = df[~df['Remark By'].isin(exclude_users)]
 
     # Create the columns layout
@@ -74,26 +73,26 @@ if uploaded_file is not None:
             # Filter rows where PTP Amount is not zero for balance calculation
             balance_amount = collector_group[(collector_group['Status'].str.contains('PTP', na=False)) & (collector_group['PTP Amount'] != 0)]['Balance'].sum()
 
-            # Round off the values
+            # Add the row to the summary
             collector_summary = pd.concat([collector_summary, pd.DataFrame([{
                 'Day': date,
                 'Collector': collector,
-                'Total Connected': round(total_connected, 0),
-                'Total PTP': round(total_ptp, 0),
-                'Total RPC': round(total_rpc, 0),
-                'PTP Amount': round(ptp_amount, 2),
-                'Balance Amount': round(balance_amount, 2),
+                'Total Connected': total_connected,
+                'Total PTP': total_ptp,
+                'Total RPC': total_rpc,
+                'PTP Amount': ptp_amount,
+                'Balance Amount': balance_amount,
             }])], ignore_index=True)
 
         # Calculate and append totals for the collector summary
         total_row = pd.DataFrame([{
             'Day': 'Total',
             'Collector': '',
-            'Total Connected': round(collector_summary['Total Connected'].sum(), 0),
-            'Total PTP': round(collector_summary['Total PTP'].sum(), 0),
-            'Total RPC': round(collector_summary['Total RPC'].sum(), 0),
-            'PTP Amount': round(collector_summary['PTP Amount'].sum(), 2),
-            'Balance Amount': round(collector_summary['Balance Amount'].sum(), 2),
+            'Total Connected': collector_summary['Total Connected'].sum(),
+            'Total PTP': collector_summary['Total PTP'].sum(),
+            'Total RPC': collector_summary['Total RPC'].sum(),
+            'PTP Amount': collector_summary['PTP Amount'].sum(),
+            'Balance Amount': collector_summary['Balance Amount'].sum(),
         }])
 
         collector_summary = pd.concat([collector_summary, total_row], ignore_index=True)
@@ -162,15 +161,15 @@ if uploaded_file is not None:
                 # Filter rows where PTP Amount is not zero for balance calculation
                 balance_amount = time_interval_group[(time_interval_group['Status'].str.contains('PTP', na=False)) & (time_interval_group['PTP Amount'] != 0)]['Balance'].sum()
 
-                # Round off the values
+                # Add the row to the summary
                 cycle_time_summary = pd.concat([cycle_time_summary, pd.DataFrame([{
                     'Cycle': cycle,
                     'Time Interval': time_interval,
-                    'Total Connected': round(total_connected, 0),
-                    'Total PTP': round(total_ptp, 0),
-                    'Total RPC': round(total_rpc, 0),
-                    'PTP Amount': round(ptp_amount, 2),
-                    'Balance Amount': round(balance_amount, 2),
+                    'Total Connected': total_connected,
+                    'Total PTP': total_ptp,
+                    'Total RPC': total_rpc,
+                    'PTP Amount': ptp_amount,
+                    'Balance Amount': balance_amount,
                 }])], ignore_index=True)
 
             # Sort by the time interval to ensure the correct order
@@ -182,11 +181,11 @@ if uploaded_file is not None:
             totals_row_cycle = {
                 'Cycle': cycle,
                 'Time Interval': 'Total',
-                'Total Connected': round(cycle_time_summary['Total Connected'].sum(), 0),
-                'Total PTP': round(cycle_time_summary['Total PTP'].sum(), 0),
-                'Total RPC': round(cycle_time_summary['Total RPC'].sum(), 0),
-                'PTP Amount': round(cycle_time_summary['PTP Amount'].sum(), 2),
-                'Balance Amount': round(cycle_time_summary['Balance Amount'].sum(), 2),
+                'Total Connected': cycle_time_summary['Total Connected'].sum(),
+                'Total PTP': cycle_time_summary['Total PTP'].sum(),
+                'Total RPC': cycle_time_summary['Total RPC'].sum(),
+                'PTP Amount': cycle_time_summary['PTP Amount'].sum(),
+                'Balance Amount': cycle_time_summary['Balance Amount'].sum(),
             }
             cycle_time_summary = pd.concat([cycle_time_summary, pd.DataFrame([totals_row_cycle])], ignore_index=True)
 
