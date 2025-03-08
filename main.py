@@ -65,7 +65,11 @@ if uploaded_file is not None:
 
         # Function to categorize the time into the intervals
         def categorize_time_interval(time_obj):
+            # Ensure the input time is in the correct format (datetime.time)
+            if isinstance(time_obj, pd.Timestamp):
+                time_obj = time_obj.time()
             for label, start, end in time_bins:
+                # Compare time objects
                 if start <= time_obj <= end:
                     return label
             return "Out of Range"  # For times outside the specified intervals
