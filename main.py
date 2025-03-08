@@ -51,21 +51,24 @@ if uploaded_file is not None:
     with col1:
         st.write("## Summary Table by Collector per Day")
 
-        # Group the data by Collector and generate the summary table
+        # Initialize the summary table
         collector_summary = pd.DataFrame(columns=[
-            'Collector', 'Total Connected', 'Total PTP', 'Total RPC', 'PTP Amount', 'Balance Amount'
+            'Collector', 'Total Calls', 'Total Connected', 'Total PTP', 'Total RPC', 'PTP Amount', 'Balance Amount'
         ])
 
-        # Grouping data by Collector (assuming 'Collector' is the name of the collector column)
+        # Group the data by Collector and calculate the metrics
         for collector, collector_group in df.groupby('Collector'):
+            total_calls = collector_group['Account No.'].count()
             total_connected = collector_group[collector_group['Call Status'] == 'CONNECTED']['Account No.'].count()
             total_ptp = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['PTP Amount'] != 0)]['Account No.'].nunique()
             total_rpc = collector_group[collector_group['Status'].str.contains('RPC', na=False)]['Account No.'].nunique()
             ptp_amount = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['PTP Amount'] != 0)]['PTP Amount'].sum()
             balance_amount = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['Balance'] != 0)]['Balance'].sum()
 
+            # Add the row to the summary table
             collector_summary = pd.concat([collector_summary, pd.DataFrame([{
                 'Collector': collector,
+                'Total Calls': total_calls,
                 'Total Connected': total_connected,
                 'Total PTP': total_ptp,
                 'Total RPC': total_rpc,
@@ -76,6 +79,7 @@ if uploaded_file is not None:
         # Add total row for the summary table by Collector
         totals_row_collector = {
             'Collector': 'Total',
+            'Total Calls': collector_summary['Total Calls'].sum(),
             'Total Connected': collector_summary['Total Connected'].sum(),
             'Total PTP': collector_summary['Total PTP'].sum(),
             'Total RPC': collector_summary['Total RPC'].sum(),
