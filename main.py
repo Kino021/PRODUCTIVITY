@@ -63,6 +63,17 @@ if uploaded_file is not None:
                 'Balance Amount': balance_amount,
             }])], ignore_index=True)
 
+        # Add total row for the summary table by Collector
+        totals_row_collector = {
+            'Collector': 'Total',
+            'Total Connected': collector_summary['Total Connected'].sum(),
+            'Total PTP': collector_summary['Total PTP'].sum(),
+            'Total RPC': collector_summary['Total RPC'].sum(),
+            'PTP Amount': collector_summary['PTP Amount'].sum(),
+            'Balance Amount': collector_summary['Balance Amount'].sum(),
+        }
+        collector_summary = pd.concat([collector_summary, pd.DataFrame([totals_row_collector])], ignore_index=True)
+
         # Display the collector summary table
         st.write(collector_summary)
 
