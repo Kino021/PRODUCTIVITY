@@ -97,6 +97,10 @@ if uploaded_file is not None:
 
         collector_summary = pd.concat([collector_summary, total_row], ignore_index=True)
 
+        # Round the numerical columns to 2 decimal places
+        collector_summary[['Total Connected', 'Total PTP', 'Total RPC', 'PTP Amount', 'Balance Amount']] = \
+            collector_summary[['Total Connected', 'Total PTP', 'Total RPC', 'PTP Amount', 'Balance Amount']].round(2)
+
         st.write(collector_summary)
 
     with col2:
@@ -188,6 +192,10 @@ if uploaded_file is not None:
                 'Balance Amount': cycle_time_summary['Balance Amount'].sum(),
             }
             cycle_time_summary = pd.concat([cycle_time_summary, pd.DataFrame([totals_row_cycle])], ignore_index=True)
+
+            # Round the numerical columns to 2 decimal places
+            cycle_time_summary[['Total Connected', 'Total PTP', 'Total RPC', 'PTP Amount', 'Balance Amount']] = \
+                cycle_time_summary[['Total Connected', 'Total PTP', 'Total RPC', 'PTP Amount', 'Balance Amount']].round(2)
 
             # Display the cycle-based summary table
             st.write(cycle_time_summary)
