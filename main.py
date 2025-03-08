@@ -69,9 +69,7 @@ if uploaded_file is not None:
             total_ptp = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['PTP Amount'] != 0)]['Account No.'].nunique()
             total_rpc = collector_group[collector_group['Status'].str.contains('RPC', na=False)]['Account No.'].nunique()
             ptp_amount = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['PTP Amount'] != 0)]['PTP Amount'].sum()
-
-            # Filter rows where PTP Amount is not zero for balance calculation
-            balance_amount = collector_group[(collector_group['Status'].str.contains('PTP', na=False)) & (collector_group['PTP Amount'] != 0)]['Balance'].sum()
+            balance_amount = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['Balance'] != 0)]['Balance'].sum()
 
             # Add the row to the summary
             collector_summary = pd.concat([collector_summary, pd.DataFrame([{
@@ -157,9 +155,7 @@ if uploaded_file is not None:
                 total_ptp = time_interval_group[time_interval_group['Status'].str.contains('PTP', na=False) & (time_interval_group['PTP Amount'] != 0)]['Account No.'].nunique()
                 total_rpc = time_interval_group[time_interval_group['Status'].str.contains('RPC', na=False)]['Account No.'].nunique()
                 ptp_amount = time_interval_group[time_interval_group['Status'].str.contains('PTP', na=False) & (time_interval_group['PTP Amount'] != 0)]['PTP Amount'].sum()
-
-                # Filter rows where PTP Amount is not zero for balance calculation
-                balance_amount = time_interval_group[(time_interval_group['Status'].str.contains('PTP', na=False)) & (time_interval_group['PTP Amount'] != 0)]['Balance'].sum()
+                balance_amount = time_interval_group[time_interval_group['Status'].str.contains('PTP', na=False) & (time_interval_group['Balance'] != 0)]['Balance'].sum()
 
                 # Add the row to the summary
                 cycle_time_summary = pd.concat([cycle_time_summary, pd.DataFrame([{
