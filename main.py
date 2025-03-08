@@ -114,27 +114,34 @@ if uploaded_file is not None:
 
             # Initialize an empty DataFrame for the summary table by time interval
             cycle_time_summary = pd.DataFrame(columns=[
-                'Cycle', 'Time Interval', 'Total Connected', 'Total PTP', 'Total RPC', 'PTP Amount', 'Balance Amount'
+                'Cycle', 'Time Interval', 'Total Calls', 'Total Connected', 'Total PTP', 'Total RPC', 'PTP Amount', 'Balance Amount', 'Avg PTP Amount', 'Avg Balance Amount'
             ])
 
             # Group by Time Interval within the current cycle
             for time_interval, time_interval_group in cycle_group.groupby('Time Interval'):
                 # Calculate the metrics for the current time interval and cycle
+                total_calls = time_interval_group['Account No.'].count()
                 total_connected = time_interval_group[time_interval_group['Call Status'] == 'CONNECTED']['Account No.'].count()
                 total_ptp = time_interval_group[time_interval_group['Status'].str.contains('PTP', na=False) & (time_interval_group['PTP Amount'] != 0)]['Account No.'].nunique()
                 total_rpc = time_interval_group[time_interval_group['Status'].str.contains('RPC', na=False)]['Account No.'].nunique()
                 ptp_amount = time_interval_group[time_interval_group['Status'].str.contains('PTP', na=False) & (time_interval_group['PTP Amount'] != 0)]['PTP Amount'].sum()
                 balance_amount = time_interval_group[time_interval_group['Status'].str.contains('PTP', na=False) & (time_interval_group['Balance'] != 0)]['Balance'].sum()
 
+                avg_ptp_amount = ptp_amount / total_ptp if total_ptp > 0 else 0
+                avg_balance_amount = balance_amount / total_ptp if total_ptp > 0 else 0
+
                 # Add the row to the summary
                 cycle_time_summary = pd.concat([cycle_time_summary, pd.DataFrame([{
                     'Cycle': cycle,
                     'Time Interval': time_interval,
+                    'Total Calls': total_calls,
                     'Total Connected': total_connected,
                     'Total PTP': total_ptp,
                     'Total RPC': total_rpc,
                     'PTP Amount': ptp_amount,
                     'Balance Amount': balance_amount,
+                    'Avg PTP Amount': avg_ptp_amount,
+                    'Avg Balance Amount': avg_balance_amount,
                 }])], ignore_index=True)
 
             # Sort by the time interval to ensure the correct order
@@ -146,11 +153,14 @@ if uploaded_file is not None:
             totals_row_cycle = {
                 'Cycle': cycle,
                 'Time Interval': 'Total',
+                'Total Calls': cycle_time_summary['Total Calls'].sum(),
                 'Total Connected': cycle_time_summary['Total Connected'].sum(),
                 'Total PTP': cycle_time_summary['Total PTP'].sum(),
                 'Total RPC': cycle_time_summary['Total RPC'].sum(),
                 'PTP Amount': cycle_time_summary['PTP Amount'].sum(),
                 'Balance Amount': cycle_time_summary['Balance Amount'].sum(),
+                'Avg PTP Amount': cycle_time_summary['Avg PTP Amount'].mean(),
+                'Avg Balance Amount': cycle_time_summary['Avg Balance Amount'].mean(),
             }
             cycle_time_summary = pd.concat([cycle_time_summary, pd.DataFrame([totals_row_cycle])], ignore_index=True)
 
