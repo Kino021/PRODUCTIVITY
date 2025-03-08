@@ -1,5 +1,5 @@
-import streamlit as st
 import pandas as pd
+import streamlit as st
 
 # Set up the page configuration
 st.set_page_config(layout="wide", page_title="PRODUCTIVITY", page_icon="📊", initial_sidebar_state="expanded")
@@ -31,9 +31,9 @@ uploaded_file = st.sidebar.file_uploader("Upload Daily Remark File", type="xlsx"
 
 if uploaded_file is not None:
     df = load_data(uploaded_file)
-    
+
     # Ensure 'Time' column is in datetime format
-    df['Time'] = pd.to_datetime(df['Time'], format='%H:%M:%S').dt.time
+    df['Time'] = pd.to_datetime(df['Time'], errors='coerce').dt.time
 
     # Create the columns layout
     col1, col2 = st.columns(2)
@@ -65,9 +65,14 @@ if uploaded_file is not None:
 
         # Function to categorize the time into the intervals
         def categorize_time_interval(time_obj):
+            # Handle cases where time_obj is NaT (invalid or missing)
+            if pd.isna(time_obj):
+                return "Invalid Time"
+            
             # Ensure the input time is in the correct format (datetime.time)
             if isinstance(time_obj, pd.Timestamp):
                 time_obj = time_obj.time()
+                
             for label, start, end in time_bins:
                 # Compare time objects
                 if start <= time_obj <= end:
