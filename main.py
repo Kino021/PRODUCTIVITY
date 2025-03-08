@@ -15,6 +15,10 @@ st.markdown(
     .sidebar .sidebar-content {
         background: #2E2E2E;
     }
+    .total-row {
+        font-weight: bold;
+        color: #FF6347; /* Change to the color you want */
+    }
     </style>
     """,
     unsafe_allow_html=True
@@ -58,7 +62,7 @@ if uploaded_file is not None:
         filtered_df = df[(df['Date'].dt.date >= start_date) & (df['Date'].dt.date <= end_date)]
 
         # Initialize an empty DataFrame for the summary table by collector
-        collector_summary = pd.DataFrame(columns=[
+        collector_summary = pd.DataFrame(columns=[ 
             'Day', 'Collector', 'Total Connected', 'Total PTP', 'Total RPC', 'PTP Amount', 'Balance Amount'
         ])
 
@@ -97,7 +101,12 @@ if uploaded_file is not None:
 
         collector_summary = pd.concat([collector_summary, total_row], ignore_index=True)
 
-        st.write(collector_summary)
+        # Apply the bold and color styles to the totals row
+        collector_summary.loc[collector_summary['Day'] == 'Total', ['Day', 'Collector']] = \
+            collector_summary.loc[collector_summary['Day'] == 'Total', ['Day', 'Collector']].apply(
+                lambda x: f"<b>{x}</b>", axis=1)
+
+        st.markdown(collector_summary.to_html(escape=False), unsafe_allow_html=True)
 
     with col2:
         st.write("## Summary Table by Time Interval per Cycle")
@@ -189,5 +198,10 @@ if uploaded_file is not None:
             }
             cycle_time_summary = pd.concat([cycle_time_summary, pd.DataFrame([totals_row_cycle])], ignore_index=True)
 
+            # Apply the bold and color styles to the totals row
+            cycle_time_summary.loc[cycle_time_summary['Time Interval'] == 'Total', ['Time Interval']] = \
+                cycle_time_summary.loc[cycle_time_summary['Time Interval'] == 'Total', ['Time Interval']].apply(
+                    lambda x: f"<b>{x}</b>", axis=1)
+
             # Display the cycle-based summary table
-            st.write(cycle_time_summary)
+            st.markdown(cycle_time_summary.to_html(escape=False), unsafe_allow_html=True)
