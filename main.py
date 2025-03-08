@@ -63,6 +63,9 @@ if uploaded_file is not None:
             ("11 PM - 11:59 PM", pd.to_datetime("23:00:00").time(), pd.to_datetime("23:59:59").time())
         ]
 
+        # Create a dictionary to map time intervals to sortable integers
+        time_interval_sort_order = {time[0]: i for i, time in enumerate(time_bins)}
+
         # Function to categorize the time into the intervals
         def categorize_time_interval(time_obj):
             if pd.isna(time_obj):
@@ -105,6 +108,11 @@ if uploaded_file is not None:
                     'PTP Amount': ptp_amount,
                     'Balance Amount': balance_amount,
                 }])], ignore_index=True)
+
+            # Sort by the time interval to ensure the correct order
+            cycle_time_summary['Time Interval'] = pd.Categorical(
+                cycle_time_summary['Time Interval'], categories=time_interval_sort_order.keys(), ordered=True)
+            cycle_time_summary = cycle_time_summary.sort_values('Time Interval')
 
             # Add totals row at the bottom for cycle-based summary
             totals_row_cycle = {
