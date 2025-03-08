@@ -39,7 +39,7 @@ if uploaded_file is not None:
     df['Time'] = pd.to_datetime(df['Time'], errors='coerce').dt.time
 
     # Filter out specific users based on 'Remark By'
-    exclude_users =
+    exclude_users = ['FGPANGANIBAN', 'KPILUSTRISIMO', 'BLRUIZ']
                      
     df = df[~df['Remark By'].isin(exclude_users)]
 
