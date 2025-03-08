@@ -40,8 +40,8 @@ if uploaded_file is not None:
 
     # Filter out specific users based on 'Remark By'
     exclude_users = ['FGPANGANIBAN', 'KPILUSTRISIMO', 'BLRUIZ', 'MMMEJIA', 'SAHERNANDEZ', 'GPRAMOS',
-                     'JGCELIZ', 'JRELEMINO', 'HVDIGNOS', 'SPMADRID', 'DRTORRALBA', 'RRCARLIT', 'MEBEJER',
-                     'DASANTOS', 'SEMIJARES', 'GMCARIAN', 'RRRECTO', 'EASORIANO', 'EUGALERA','JATERRADO','LMLABRADOR']
+                     'JGCELIZ', 'SPMADRID', 'RRCARLIT', 'MEBEJER',
+                     'SEMIJARES', 'GMCARIAN', 'RRRECTO', 'EASORIANO', 'EUGALERA','JATERRADO','LMLABRADOR']
     df = df[~df['Remark By'].isin(exclude_users)]
 
     # Create the columns layout
