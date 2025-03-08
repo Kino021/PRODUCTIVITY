@@ -58,7 +58,7 @@ if uploaded_file is not None:
         filtered_df = df[(df['Date'].dt.date >= start_date) & (df['Date'].dt.date <= end_date)]
 
         # Initialize an empty DataFrame for the summary table by collector
-        collector_summary = pd.DataFrame(columns=[
+        collector_summary = pd.DataFrame(columns=[ 
             'Day', 'Collector', 'Total Connected', 'Total PTP', 'Total RPC', 'PTP Amount', 'Balance Amount'
         ])
 
@@ -96,6 +96,9 @@ if uploaded_file is not None:
         }])
 
         collector_summary = pd.concat([collector_summary, total_row], ignore_index=True)
+
+        # Round off numeric columns to 2 decimal places
+        collector_summary[['PTP Amount', 'Balance Amount']] = collector_summary[['PTP Amount', 'Balance Amount']].round(2)
 
         st.write(collector_summary)
 
@@ -146,7 +149,7 @@ if uploaded_file is not None:
             st.write(f"### Summary Table for Cycle: {cycle}")
 
             # Initialize an empty DataFrame for the summary table by time interval
-            cycle_time_summary = pd.DataFrame(columns=[
+            cycle_time_summary = pd.DataFrame(columns=[ 
                 'Cycle', 'Time Interval', 'Total Connected', 'Total PTP', 'Total RPC', 'PTP Amount', 'Balance Amount'
             ])
 
@@ -176,6 +179,9 @@ if uploaded_file is not None:
             cycle_time_summary['Time Interval'] = pd.Categorical(
                 cycle_time_summary['Time Interval'], categories=time_interval_sort_order.keys(), ordered=True)
             cycle_time_summary = cycle_time_summary.sort_values('Time Interval')
+
+            # Round off numeric columns to 2 decimal places
+            cycle_time_summary[['PTP Amount', 'Balance Amount']] = cycle_time_summary[['PTP Amount', 'Balance Amount']].round(2)
 
             # Add totals row at the bottom for cycle-based summary
             totals_row_cycle = {
