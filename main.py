@@ -32,6 +32,9 @@ uploaded_file = st.sidebar.file_uploader("Upload Daily Remark File", type="xlsx"
 if uploaded_file is not None:
     df = load_data(uploaded_file)
     
+    # Ensure 'Time' column is in datetime format
+    df['Time'] = pd.to_datetime(df['Time'], format='%H:%M:%S').dt.time
+
     # Create the columns layout
     col1, col2 = st.columns(2)
 
@@ -40,30 +43,30 @@ if uploaded_file is not None:
 
         # Define time intervals (6 AM - 6:59 AM, 7 AM - 7:59 AM, etc.)
         time_bins = [
-            ("6 AM - 6:59 AM", "06:00:00", "06:59:59"),
-            ("7 AM - 7:59 AM", "07:00:00", "07:59:59"),
-            ("8 AM - 8:59 AM", "08:00:00", "08:59:59"),
-            ("9 AM - 9:59 AM", "09:00:00", "09:59:59"),
-            ("10 AM - 10:59 AM", "10:00:00", "10:59:59"),
-            ("11 AM - 11:59 AM", "11:00:00", "11:59:59"),
-            ("12 PM - 12:59 PM", "12:00:00", "12:59:59"),
-            ("1 PM - 1:59 PM", "13:00:00", "13:59:59"),
-            ("2 PM - 2:59 PM", "14:00:00", "14:59:59"),
-            ("3 PM - 3:59 PM", "15:00:00", "15:59:59"),
-            ("4 PM - 4:59 PM", "16:00:00", "16:59:59"),
-            ("5 PM - 5:59 PM", "17:00:00", "17:59:59"),
-            ("6 PM - 6:59 PM", "18:00:00", "18:59:59"),
-            ("7 PM - 7:59 PM", "19:00:00", "19:59:59"),
-            ("8 PM - 8:59 PM", "20:00:00", "20:59:59"),
-            ("9 PM - 9:59 PM", "21:00:00", "21:59:59"),
-            ("10 PM - 10:59 PM", "22:00:00", "22:59:59"),
-            ("11 PM - 11:59 PM", "23:00:00", "23:59:59")
+            ("6 AM - 6:59 AM", pd.to_datetime("06:00:00").time(), pd.to_datetime("06:59:59").time()),
+            ("7 AM - 7:59 AM", pd.to_datetime("07:00:00").time(), pd.to_datetime("07:59:59").time()),
+            ("8 AM - 8:59 AM", pd.to_datetime("08:00:00").time(), pd.to_datetime("08:59:59").time()),
+            ("9 AM - 9:59 AM", pd.to_datetime("09:00:00").time(), pd.to_datetime("09:59:59").time()),
+            ("10 AM - 10:59 AM", pd.to_datetime("10:00:00").time(), pd.to_datetime("10:59:59").time()),
+            ("11 AM - 11:59 AM", pd.to_datetime("11:00:00").time(), pd.to_datetime("11:59:59").time()),
+            ("12 PM - 12:59 PM", pd.to_datetime("12:00:00").time(), pd.to_datetime("12:59:59").time()),
+            ("1 PM - 1:59 PM", pd.to_datetime("13:00:00").time(), pd.to_datetime("13:59:59").time()),
+            ("2 PM - 2:59 PM", pd.to_datetime("14:00:00").time(), pd.to_datetime("14:59:59").time()),
+            ("3 PM - 3:59 PM", pd.to_datetime("15:00:00").time(), pd.to_datetime("15:59:59").time()),
+            ("4 PM - 4:59 PM", pd.to_datetime("16:00:00").time(), pd.to_datetime("16:59:59").time()),
+            ("5 PM - 5:59 PM", pd.to_datetime("17:00:00").time(), pd.to_datetime("17:59:59").time()),
+            ("6 PM - 6:59 PM", pd.to_datetime("18:00:00").time(), pd.to_datetime("18:59:59").time()),
+            ("7 PM - 7:59 PM", pd.to_datetime("19:00:00").time(), pd.to_datetime("19:59:59").time()),
+            ("8 PM - 8:59 PM", pd.to_datetime("20:00:00").time(), pd.to_datetime("20:59:59").time()),
+            ("9 PM - 9:59 PM", pd.to_datetime("21:00:00").time(), pd.to_datetime("21:59:59").time()),
+            ("10 PM - 10:59 PM", pd.to_datetime("22:00:00").time(), pd.to_datetime("22:59:59").time()),
+            ("11 PM - 11:59 PM", pd.to_datetime("23:00:00").time(), pd.to_datetime("23:59:59").time())
         ]
 
         # Function to categorize the time into the intervals
-        def categorize_time_interval(time_str):
+        def categorize_time_interval(time_obj):
             for label, start, end in time_bins:
-                if start <= time_str <= end:
+                if start <= time_obj <= end:
                     return label
             return "Out of Range"  # For times outside the specified intervals
 
