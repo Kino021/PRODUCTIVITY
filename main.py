@@ -38,6 +38,34 @@ if uploaded_file is not None:
     # Create the columns layout
     col1, col2 = st.columns(2)
 
+    with col1:
+        st.write("## Summary Table by Collector per Day")
+
+        # Group the data by Collector and generate the summary table
+        collector_summary = pd.DataFrame(columns=[
+            'Collector', 'Total Connected', 'Total PTP', 'Total RPC', 'PTP Amount', 'Balance Amount'
+        ])
+
+        # Grouping data by Collector (assuming 'Collector' is the name of the collector column)
+        for collector, collector_group in df.groupby('Collector'):
+            total_connected = collector_group[collector_group['Call Status'] == 'CONNECTED']['Account No.'].count()
+            total_ptp = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['PTP Amount'] != 0)]['Account No.'].nunique()
+            total_rpc = collector_group[collector_group['Status'].str.contains('RPC', na=False)]['Account No.'].nunique()
+            ptp_amount = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['PTP Amount'] != 0)]['PTP Amount'].sum()
+            balance_amount = collector_group[collector_group['Status'].str.contains('PTP', na=False) & (collector_group['Balance'] != 0)]['Balance'].sum()
+
+            collector_summary = pd.concat([collector_summary, pd.DataFrame([{
+                'Collector': collector,
+                'Total Connected': total_connected,
+                'Total PTP': total_ptp,
+                'Total RPC': total_rpc,
+                'PTP Amount': ptp_amount,
+                'Balance Amount': balance_amount,
+            }])], ignore_index=True)
+
+        # Display the collector summary table
+        st.write(collector_summary)
+
     with col2:
         st.write("## Summary Table by Time Interval per Cycle")
 
