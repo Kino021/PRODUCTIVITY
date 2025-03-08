@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
 
-# Set up the page configuration for a wide layout
+# Set up the page configuration
 st.set_page_config(layout="wide", page_title="PRODUCTIVITY", page_icon="📊", initial_sidebar_state="expanded")
 
 # Apply dark mode styling
@@ -44,8 +44,8 @@ if uploaded_file is not None:
                      'DASANTOS', 'SEMIJARES', 'GMCARIAN', 'RRRECTO', 'EASORIANO', 'EUGALERA','JATERRADO','LMLABRADOR']
     df = df[~df['Remark By'].isin(exclude_users)]
 
-    # Create the columns layout with larger column width
-    col1, col2 = st.columns([2, 2])  # Adjusted columns to maximize space
+    # Create the columns layout
+    col1, col2 = st.columns(2)
 
     with col1:
         st.write("## Summary Table by Collector per Day")
@@ -97,7 +97,6 @@ if uploaded_file is not None:
 
         collector_summary = pd.concat([collector_summary, total_row], ignore_index=True)
 
-        # Show the full table
         st.write(collector_summary)
 
     with col2:
