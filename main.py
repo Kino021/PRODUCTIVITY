@@ -30,7 +30,7 @@ def load_data(uploaded_file):
     return df
 
 # File uploader for Excel file
-uploaded_file = st.sidebar.file_uploader("Upload Daily Remark File", type="xlsx")
+uploaded_file = st.sidebar.file_uploader("Upload Daily Remark Files", type="xlsx")
 
 if uploaded_file is not None:
     df = load_data(uploaded_file)
